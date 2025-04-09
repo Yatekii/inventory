@@ -1,13 +1,39 @@
-{
+{ config, pkgs, lib, sources, ... }:
+let
+  conduwuit-package = sources.conduwuit.packages.x86_64-linux.all-features;
+  conduwuit-socket = "/run/conduwuit/conduwuit.sock";
+  conduwuit-backup-path-relative = "conduwuit-backup";
+  conduwuit-backup-path = "/var/lib/${conduwuit-backup-path-relative}";
+  conduwuit-user = "conduwuit";
+  conduwuit-config = (pkgs.formats.toml { }).generate "conduwuit.toml"
+    (config.services.conduwuit).settings;
+  conduwuit-backup = (pkgs.writeShellApplication {
+    name = "conduwuit-backup";
+    runtimeInputs = [ ];
+    text = ''
+      set -eu
+      PID=$(systemctl show --property MainPID --value conduwuit)
+      kill -s SIGUSR2 "$PID"
+    '';
+  });
+  conduwuit-admin = (pkgs.writeShellApplication {
+    name = "conduwuit-admin";
+    runtimeInputs = [ sources.conduwuit.packages.x86_64-linux.all-features ];
+    text = ''
+      systemctl stop conduwuit
+      export CONDUWUIT_CONFIG=${conduwuit-config};
+      ${sources.conduwuit.packages.x86_64-linux.all-features}/bin/conduwuit --execute "$*" --execute "server shutdown"
+      systemctl start conduwuit
+    '';
+  });
+in {
   imports = [
     # contains your disk format and partitioning configuration.
     ../../modules/disko.nix
     # this file is shared among all machines
     ../../modules/shared.nix
+    ../../modules/caddy.nix
   ];
-
-  # This is your user login name.
-  users.users.user.name = "yatekii";
 
   # Set this for clan commands use ssh i.e. `clan machines update`
   # If you change the hostname, you need to update this line to root@<new-hostname>
@@ -18,7 +44,7 @@
   # Replace <IP> with the IP of the installer printed on the screen or by running the `ip addr` command.
   # ssh root@<IP> lsblk --output NAME,ID-LINK,FSTYPE,SIZE,MOUNTPOINT
   disko.devices.disk.main.device =
-    "/dev/disk/by-id/0QEMU_QEMU_HARDDISK_59606587";
+    "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_59606587";
 
   # IMPORTANT! Add your SSH key here
   # e.g. > cat ~/.ssh/id_ed25519.pub
@@ -29,4 +55,68 @@
   # Zerotier needs one controller to accept new nodes. Once accepted
   # the controller can be offline and routing still works.
   clan.core.networking.zerotier.controller.enable = true;
+
+  networking.firewall = {
+    enable = true;
+    allowedTCPPorts = [ 80 443 8448 ];
+  };
+
+  environment.systemPackages = [ conduwuit-backup conduwuit-admin ];
+
+  services.conduwuit = {
+    enable = true;
+    package = conduwuit-package;
+    group = "caddy";
+    settings.global = {
+      server_name = "aiur.huesser.dev";
+      unix_socket_path = conduwuit-socket;
+      well_known = {
+        client = "https://matrix.aiur.huesser.dev";
+        server = "matrix.aiur.huesser.dev:443";
+        support_email = "noah@huesser.dev";
+      };
+      allow_registration = true;
+      registration_token_file =
+        config.clan.core.vars.generators.registration-token.files.registration-token.path;
+      admin_signal_execute = [ "server backup-database" ];
+      database_backup_path = conduwuit-backup-path;
+    };
+  };
+  systemd.services.conduwuit.serviceConfig.StateDirectory =
+    [ conduwuit-backup-path-relative ];
+
+  clan.core.vars.generators.registration-token = {
+    prompts.registration-token.description =
+      "the PSK for regstering a new matrix account";
+    prompts.registration-token.type = "hidden";
+    prompts.registration-token.persist = true;
+    files.registration-token = {
+      secret = true;
+      owner = conduwuit-user;
+    };
+  };
+
+  services.caddy.virtualHosts."aiur.huesser.dev".extraConfig = ''
+    reverse_proxy /.well-known/matrix/* unix/${conduwuit-socket}
+  '';
+
+  services.caddy.virtualHosts."matrix.aiur.huesser.dev".extraConfig = ''
+    reverse_proxy /_matrix/* unix/${conduwuit-socket}
+    reverse_proxy /_conduwuit/* unix/${conduwuit-socket}
+  '';
+
+  services.caddy.virtualHosts."matrix.aiur.huesser.dev:8448".extraConfig = ''
+    reverse_proxy /_matrix/* unix/${conduwuit-socket}
+    reverse_proxy /_conduwuit/* unix/${conduwuit-socket}
+  '';
+
+  systemd.services."conduwuit-backup" = {
+    serviceConfig = {
+      Type = "oneshot";
+      User = conduwuit-user;
+      ExecStart = "${conduwuit-backup}/bin/conduwuit-backup";
+    };
+    wantedBy = [ "timers.target" ];
+    startAt = "04:00";
+  };
 }

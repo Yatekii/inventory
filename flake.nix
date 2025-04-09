@@ -2,8 +2,9 @@
   inputs.clan-core.url =
     "https://git.clan.lol/clan/clan-core/archive/main.tar.gz";
   inputs.nixpkgs.follows = "clan-core/nixpkgs";
+  inputs.conduwuit.url = "github:girlbossceo/conduwuit?tag=0.5.0-rc3";
 
-  outputs = { self, clan-core, ... }:
+  outputs = { self, clan-core, conduwuit, ... }:
     let
       # Usage see: https://docs.clan.lol
       clan = clan-core.lib.buildClan {
@@ -21,6 +22,8 @@
           # You can also specify additional machines here.
           # aiur = { imports = [ ./aiur/configuration.nix ]; };
         };
+
+        specialArgs = { sources = { conduwuit = conduwuit; }; };
       };
     in {
       inherit (clan) nixosConfigurations clanInternals;
