@@ -2,8 +2,10 @@
 let
   conduwuit-package = sources.conduwuit.packages.x86_64-linux.all-features;
   conduwuit-socket = "/run/conduwuit/conduwuit.sock";
+  conduwuit-path = "/var/lib/conduwuit";
   conduwuit-backup-path-relative = "conduwuit-backup";
   conduwuit-backup-path = "/var/lib/${conduwuit-backup-path-relative}";
+  conduwuit-restore-path = "/var/lib/conduwuit-restore";
   conduwuit-user = "conduwuit";
   conduwuit-config = (pkgs.formats.toml { }).generate "conduwuit.toml"
     (config.services.conduwuit).settings;
@@ -14,6 +16,21 @@ let
       set -eu
       PID=$(systemctl show --property MainPID --value conduwuit)
       kill -s SIGUSR2 "$PID"
+    '';
+  });
+  conduwuit-restore = (pkgs.writeShellApplication {
+    name = "conduwuit-restore";
+    runtimeInputs = [ ];
+    text = ''
+      set -eu
+      systemctl stop conduwuit
+      # create a new directory for merging together the data
+      mkdir ${conduwuit-restore-path}
+      cd ${conduwuit-restore-path}
+      cp ${conduwuit-backup-path}/shared_checksum/*.sst .
+      for file in *.sst; do mv "$file" "$(echo "$file" | sed 's/_s.*/.sst/')"; done
+      mv ${conduwuit-restore-path} ${conduwuit-path}
+      systemctl start conduwuit
     '';
   });
   conduwuit-admin = (pkgs.writeShellApplication {
@@ -119,4 +136,11 @@ in {
     wantedBy = [ "timers.target" ];
     startAt = "04:00";
   };
+
+  clan.core.state.conduwuit = {
+    folders = [ conduwuit-backup-path ];
+    preBackupScript = "${conduwuit-backup}/bin/conduwuit-backup";
+    postRestoreScript = "${conduwuit-backup}/bin/conduwuit-restore";
+  };
+
 }
