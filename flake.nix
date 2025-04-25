@@ -1,11 +1,17 @@
 {
   inputs.clan-core.url =
     "https://git.clan.lol/clan/clan-core/archive/main.tar.gz";
+  # inputs.clan-core.url =
+  #   "git+https://git.clan.lol/Yatekii/clan-core?ref=init-restic";
+  # inputs.clan-core.url = "path:///Users/yatekii/repos/clan-core";
   inputs.nixpkgs.follows = "clan-core/nixpkgs";
   inputs.conduwuit.url = "github:girlbossceo/conduwuit?tag=0.5.0-rc3";
 
   outputs = { self, clan-core, conduwuit, ... }:
     let
+      hetzner-offsite-backup-user = "u415891";
+      hetzner-offsite-backup-host =
+        "${hetzner-offsite-backup-user}.your-storagebox.de";
       # Usage see: https://docs.clan.lol
       clan = clan-core.lib.buildClan {
         inherit self;
@@ -19,11 +25,33 @@
         # local> mkdir -p ./machines/machine1
         # local> Edit ./machines/<machine>/configuration.nix to your liking.
         machines = {
-          # You can also specify additional machines here.
-          # aiur = { imports = [ ./aiur/configuration.nix ]; };
+          # "aiur" = { clan.core.networking.buildHost = "root@localhost"; };
         };
 
-        specialArgs = { sources = { conduwuit = conduwuit; }; };
+        inventory.services.restic.clan-backup = {
+          roles.client.machines = [
+            "aiur"
+          ]; # TODO: How do I reference this programmatically instead of by string?
+
+          roles.client.config = {
+            destinations = {
+              hetzner-offsite-backup.externalTarget.connectionString =
+                "rclone:${hetzner-offsite-backup-host}";
+              hetzner-offsite-backup.externalTarget.rclone = {
+                host = hetzner-offsite-backup-host;
+                user = hetzner-offsite-backup-user;
+                port = 23;
+              };
+            };
+          };
+        };
+
+        specialArgs = {
+          sources = { conduwuit = conduwuit; };
+          names = {
+            hetzner-offsite-backup-host = hetzner-offsite-backup-host;
+          };
+        };
       };
     in {
       inherit (clan) nixosConfigurations clanInternals;
@@ -37,6 +65,14 @@
       ] (system: {
         default = clan-core.inputs.nixpkgs.legacyPackages.${system}.mkShell {
           packages = [ clan-core.packages.${system}.clan-cli ];
+        };
+        dev = clan-core.inputs.nixpkgs.legacyPackages.${system}.mkShell {
+          packages =
+            [ clan-core.inputs.nixpkgs.legacyPackages.${system}.python3 ];
+          shellHook = ''
+            export GIT_ROOT="$(git rev-parse --show-toplevel)"
+            export PATH=$PATH:~/repos/clan-core/pkgs/clan-cli/bin
+          '';
         };
       });
     };

@@ -1,4 +1,4 @@
-{ config, pkgs, lib, sources, ... }:
+{ config, pkgs, lib, sources, names, ... }:
 let
   conduwuit-package = sources.conduwuit.packages.x86_64-linux.all-features;
   conduwuit-socket = "/run/conduwuit/conduwuit.sock";
@@ -141,5 +141,12 @@ in {
     folders = [ conduwuit-backup-path ];
     preBackupScript = "${conduwuit-backup}/bin/conduwuit-backup";
     postRestoreScript = "${conduwuit-backup}/bin/conduwuit-restore";
+  };
+
+  programs.ssh.knownHosts = {
+    storagebox-ed25519.hostNames =
+      [ "[${names.hetzner-offsite-backup-host}]:23" ];
+    storagebox-ed25519.publicKey =
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIICf9svRenC/PLKIL9nk6K/pxQgoiFC41wTNvoIncOxs";
   };
 }
