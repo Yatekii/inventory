@@ -142,5 +142,4 @@ in {
     preBackupScript = "${conduwuit-backup}/bin/conduwuit-backup";
     postRestoreScript = "${conduwuit-backup}/bin/conduwuit-restore";
   };
-
 }
