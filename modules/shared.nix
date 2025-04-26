@@ -10,6 +10,8 @@
     clan-core.clanModules.trusted-nix-caches
   ];
 
+  # clan.core.networking.buildHost = "yatekii@localhost";
+
   nix.settings.substituters = [ "https://attic.kennel.juneis.dog/conduwuit" ];
   nix.settings.trusted-public-keys =
     [ "conduit:eEKoUwlQGDdYmAI/Q/0slVlegqh/QmAvQd7HBSm21Wk=" ];
