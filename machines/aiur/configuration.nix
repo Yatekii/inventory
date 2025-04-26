@@ -67,6 +67,7 @@ in {
   # e.g. > cat ~/.ssh/id_ed25519.pub
   users.users.root.openssh.authorizedKeys.keys = [''
     ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH/zWoCMabsPjao7AZKfA1jvokjbOBxyGHHKOwTA9krw auraya
+    ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJQC2K0wDAi6HBOn0kXGBGRw4zjdGivMCSF84P/w7y2f arcturo
   ''];
 
   # Zerotier needs one controller to accept new nodes. Once accepted
