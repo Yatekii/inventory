@@ -7,7 +7,25 @@
   inputs.nixpkgs.follows = "clan-core/nixpkgs";
   inputs.conduwuit.url = "github:girlbossceo/conduwuit?tag=0.5.0-rc3";
 
-  outputs = { self, clan-core, conduwuit, ... }:
+  inputs.pyproject-nix = {
+    url = "github:pyproject-nix/pyproject.nix";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
+
+  inputs.uv2nix = {
+    url = "github:pyproject-nix/uv2nix";
+    inputs.pyproject-nix.follows = "pyproject-nix";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
+
+  inputs.pyproject-build-systems = {
+    url = "github:pyproject-nix/build-system-pkgs";
+    inputs.pyproject-nix.follows = "pyproject-nix";
+    inputs.uv2nix.follows = "uv2nix";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
+
+  outputs = { self, clan-core, conduwuit, pyproject-nix, uv2nix, ... }:
     let
       hetzner-offsite-backup-user = "u415891";
       hetzner-offsite-backup-host =
@@ -47,7 +65,11 @@
         };
 
         specialArgs = {
-          sources = { conduwuit = conduwuit; };
+          sources = {
+            conduwuit = conduwuit;
+            uv2nix = uv2nix;
+            pyproject-nix = pyproject-nix;
+          };
           names = {
             hetzner-offsite-backup-host = hetzner-offsite-backup-host;
           };
