@@ -44,46 +44,34 @@ let
     '';
   });
 
-  # garmin-grafana = pkgs.python3Packages.buildPythonApplication rec {
-  #   pname = "garmin-grafana";
-  #   version = "0.0.2";
-  #   src = pkgs.fetchFromGitHub rec {
-  #     inherit pname;
-  #     name = pname;
-  #     rev = "ff770483d8052e9532885d0b0f21b82dad6b6e52";
-  #     owner = "arpanghosh8453";
-  #     repo = "garmin-grafana";
-  #     sha256 = "sha256-ZsRn5G73NhdiBYfdzPmVOL3Nu4LYrsWbKQO0t0Xefm8=";
-  #   };
-  #   pyproject = true;
-
-  #   build-system = [ pkgs.uv ];
-  #   pypaBuildFlags = [ "--installer" "uv" ];
-
-  #   meta = { mainProgram = "garmin-fetch.py"; };
-  # };
-
-  garmin-grafana-source = pkgs.fetchFromGitHub rec {
-    # inherit pname;
-    name = "garmin-grafana";
-    rev = "ff770483d8052e9532885d0b0f21b82dad6b6e52";
-    owner = "arpanghosh8453";
-    repo = "garmin-grafana";
-    sha256 = "sha256-ZsRn5G73NhdiBYfdzPmVOL3Nu4LYrsWbKQO0t0Xefm8=";
-  };
-
   garmin-grafana = let
-    python = pkgs.python312;
-    pythonSet = (pkgs.callPackage inputs.pyproject-nix.build.packages {
-      inherit python;
-    });
-    packageSource = inputs.uv2nix.lib.workspace.loadWorkspace {
-      workspaceRoot = garmin-grafana-source.outPath;
+    workspace = sources.uv2nix.lib.workspace.loadWorkspace {
+      workspaceRoot = sources.garmin-grafana;
     };
-    inherit (pkgs.callPackages inputs.pyproject-nix.build.util { })
-      mkApplication;
-  in mkApplication {
-    venv = pythonSet.mkVirtualEnv "garmin-grafana" workspace.deps.default;
+
+    overlay = workspace.mkPyprojectOverlay { sourcePreference = "wheel"; };
+
+    # fitparse does not have a wheel. Only an sdist.
+    pyprojectOverrides = final: prev: {
+      fitparse = prev.fitparse.overrideAttrs (old: {
+        nativeBuildInputs = old.nativeBuildInputs
+          ++ final.resolveBuildSystem { setuptools = [ ]; };
+      });
+    };
+
+    python = pkgs.python313;
+
+    pythonSet = (pkgs.callPackage sources.pyproject-nix.build.packages {
+      inherit python;
+    }).overrideScope (lib.composeManyExtensions [
+      sources.pyproject-build-systems.overlays.default
+      overlay
+      pyprojectOverrides
+    ]);
+
+    venv = pythonSet.mkVirtualEnv "garmin-grafana-env" workspace.deps.default;
+  in (pkgs.callPackages sources.pyproject-nix.build.util { }).mkApplication {
+    venv = venv;
     package = pythonSet.garmin-grafana;
   };
 in {

@@ -435,6 +435,22 @@
         "type": "github"
       }
     },
+    "garmin-grafana": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1746102296,
+        "narHash": "sha256-7XZrxipDGXUsoXtxVTUWC7R655uhQXJMliOjjbL0rZc=",
+        "owner": "arpanghosh8453",
+        "repo": "garmin-grafana",
+        "rev": "29a8d2440272cfe268dd2d06c64d98cba8ff1d1d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "arpanghosh8453",
+        "repo": "garmin-grafana",
+        "type": "github"
+      }
+    },
     "git-hooks": {
       "inputs": {
         "flake-compat": [
@@ -827,6 +843,7 @@
       "inputs": {
         "clan-core": "clan-core",
         "conduwuit": "conduwuit",
+        "garmin-grafana": "garmin-grafana",
         "nixpkgs": [
           "clan-core",
           "nixpkgs"

@@ -25,7 +25,13 @@
     inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, clan-core, conduwuit, pyproject-nix, uv2nix, ... }:
+  inputs.garmin-grafana = {
+    url = "github:arpanghosh8453/garmin-grafana";
+    flake = false;
+  };
+
+  outputs = { self, clan-core, conduwuit, pyproject-nix, pyproject-build-systems
+    , uv2nix, garmin-grafana, ... }:
     let
       hetzner-offsite-backup-user = "u415891";
       hetzner-offsite-backup-host =
@@ -69,6 +75,8 @@
             conduwuit = conduwuit;
             uv2nix = uv2nix;
             pyproject-nix = pyproject-nix;
+            pyproject-build-systems = pyproject-build-systems;
+            garmin-grafana = garmin-grafana;
           };
           names = {
             hetzner-offsite-backup-host = hetzner-offsite-backup-host;
