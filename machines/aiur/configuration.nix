@@ -44,36 +44,6 @@ let
     '';
   });
 
-  garmin-grafana = let
-    workspace = sources.uv2nix.lib.workspace.loadWorkspace {
-      workspaceRoot = sources.garmin-grafana;
-    };
-
-    overlay = workspace.mkPyprojectOverlay { sourcePreference = "wheel"; };
-
-    # fitparse does not have a wheel. Only an sdist.
-    pyprojectOverrides = final: prev: {
-      fitparse = prev.fitparse.overrideAttrs (old: {
-        nativeBuildInputs = old.nativeBuildInputs
-          ++ final.resolveBuildSystem { setuptools = [ ]; };
-      });
-    };
-
-    python = pkgs.python313;
-
-    pythonSet = (pkgs.callPackage sources.pyproject-nix.build.packages {
-      inherit python;
-    }).overrideScope (lib.composeManyExtensions [
-      sources.pyproject-build-systems.overlays.default
-      overlay
-      pyprojectOverrides
-    ]);
-
-    venv = pythonSet.mkVirtualEnv "garmin-grafana-env" workspace.deps.default;
-  in (pkgs.callPackages sources.pyproject-nix.build.util { }).mkApplication {
-    venv = venv;
-    package = pythonSet.garmin-grafana;
-  };
 in {
   imports = [
     # contains your disk format and partitioning configuration.
@@ -81,6 +51,8 @@ in {
     # this file is shared among all machines
     ../../modules/shared.nix
     ../../modules/caddy.nix
+    ../../modules/grafana.nix
+    ../../modules/garmin-grafana.nix
   ];
 
   # Set this for clan commands use ssh i.e. `clan machines update`
@@ -173,16 +145,6 @@ in {
     folders = [ conduwuit-backup-path ];
     preBackupScript = "${conduwuit-backup}/bin/conduwuit-backup";
     postRestoreScript = "${conduwuit-backup}/bin/conduwuit-restore";
-  };
-
-  systemd.services."garmin-grafana" = {
-    enable = true;
-
-    serviceConfig = {
-      ExecStart = lib.getExe garmin-grafana;
-      Restart = "on-failure";
-    };
-    wantedBy = [ "multi-user.target" ];
   };
 
   programs.ssh.knownHosts = {
