@@ -1,6 +1,6 @@
-{ config, pkgs, lib, sources, names, ... }:
+{ config, pkgs, conduwuit, names, ... }:
 let
-  conduwuit-package = sources.conduwuit.packages.x86_64-linux.all-features;
+  conduwuit-package = conduwuit.packages.x86_64-linux.all-features;
   conduwuit-socket = "/run/conduwuit/conduwuit.sock";
   conduwuit-path = "/var/lib/conduwuit";
   conduwuit-backup-path-relative = "conduwuit-backup";
@@ -35,11 +35,11 @@ let
   });
   conduwuit-admin = (pkgs.writeShellApplication {
     name = "conduwuit-admin";
-    runtimeInputs = [ sources.conduwuit.packages.x86_64-linux.all-features ];
+    runtimeInputs = [ conduwuit.packages.x86_64-linux.all-features ];
     text = ''
       systemctl stop conduwuit
       export CONDUWUIT_CONFIG=${conduwuit-config};
-      ${sources.conduwuit.packages.x86_64-linux.all-features}/bin/conduwuit --execute "$*" --execute "server shutdown"
+      ${conduwuit.packages.x86_64-linux.all-features}/bin/conduwuit --execute "$*" --execute "server shutdown"
       systemctl start conduwuit
     '';
   });

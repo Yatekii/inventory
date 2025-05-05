@@ -30,8 +30,7 @@
     flake = false;
   };
 
-  outputs = { self, clan-core, conduwuit, pyproject-nix, pyproject-build-systems
-    , uv2nix, garmin-grafana, ... }:
+  outputs = inputs@{ self, clan-core, ... }:
     let
       hetzner-offsite-backup-user = "u415891";
       hetzner-offsite-backup-host =
@@ -52,32 +51,46 @@
           # "aiur" = { clan.core.networking.buildHost = "root@localhost"; };
         };
 
-        inventory.services.restic.clan-backup = {
-          roles.client.machines = [
-            "aiur"
-          ]; # TODO: How do I reference this programmatically instead of by string?
-
-          roles.client.config = {
-            destinations = {
-              hetzner-offsite-backup.externalTarget.connectionString =
-                "rclone:${hetzner-offsite-backup-host}";
-              hetzner-offsite-backup.externalTarget.rclone = {
-                host = hetzner-offsite-backup-host;
-                user = hetzner-offsite-backup-user;
-                port = 23;
+        inventory = {
+          instances = {
+            "backup" = {
+              module.name = "restic";
+              roles.client.machines = { "aiur" = { }; };
+              roles.client.settings = {
+                destinations = {
+                  hetzner-offsite-backup.externalTarget.connectionString =
+                    "rclone:${hetzner-offsite-backup-host}";
+                  hetzner-offsite-backup.externalTarget.rclone = {
+                    host = hetzner-offsite-backup-host;
+                    user = hetzner-offsite-backup-user;
+                    port = 23;
+                  };
+                };
               };
             };
           };
         };
 
+        # inventory.services.restic.clan-backup = {
+        #   roles.client.machines = [
+        #     "aiur"
+        #   ]; # TODO: How do I reference this programmatically instead of by string?
+
+        #   roles.client.config = {
+        #     destinations = {
+        #       hetzner-offsite-backup.externalTarget.connectionString =
+        #         "rclone:${hetzner-offsite-backup-host}";
+        #       hetzner-offsite-backup.externalTarget.rclone = {
+        #         host = hetzner-offsite-backup-host;
+        #         user = hetzner-offsite-backup-user;
+        #         port = 23;
+        #       };
+        #     };
+        #   };
+        # };
+
         specialArgs = {
-          sources = {
-            conduwuit = conduwuit;
-            uv2nix = uv2nix;
-            pyproject-nix = pyproject-nix;
-            pyproject-build-systems = pyproject-build-systems;
-            garmin-grafana = garmin-grafana;
-          };
+          inherit inputs;
           names = {
             hetzner-offsite-backup-host = hetzner-offsite-backup-host;
           };

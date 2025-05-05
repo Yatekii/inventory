@@ -93,11 +93,11 @@
         "treefmt-nix": "treefmt-nix"
       },
       "locked": {
-        "lastModified": 1745672365,
-        "narHash": "sha256-HDyWeXLSG9Ew0G//L3SUcy1LVExOLnRQITRfQXspYvU=",
+        "lastModified": 1746452736,
+        "narHash": "sha256-kcrW5i47+yeaIdjcAyhWFE5i2iE3Tkhen4rqmezOtGs=",
         "ref": "refs/heads/init-restic",
-        "rev": "7c595c04c511b345d0d29ab393ba32e7265a732a",
-        "revCount": 6316,
+        "rev": "7de4a2bf962e37c07115fdcd788a743fe48bc78f",
+        "revCount": 6385,
         "type": "git",
         "url": "file:///Users/yatekii/repos/clan-core"
       },
@@ -209,11 +209,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1744470659,
-        "narHash": "sha256-syTeDvkDg9eiFpn8gUOz3DLOHJoJFS1Md7DXJQBIQFg=",
+        "lastModified": 1744707635,
+        "narHash": "sha256-aiZL9isFQPd8hqq8B5qdzpvvfEfInG6M8InxYfckA9o=",
         "ref": "refs/heads/main",
-        "rev": "35cc96c4f952a93ecb1abc8caefddc52f69fdd98",
-        "revCount": 401,
+        "rev": "439f8513a4afc7b633d7f50326eefaaaed145984",
+        "revCount": 407,
         "type": "git",
         "url": "https://git.clan.lol/clan/data-mesher"
       },
@@ -438,11 +438,11 @@
     "garmin-grafana": {
       "flake": false,
       "locked": {
-        "lastModified": 1746102296,
-        "narHash": "sha256-7XZrxipDGXUsoXtxVTUWC7R655uhQXJMliOjjbL0rZc=",
+        "lastModified": 1746449858,
+        "narHash": "sha256-9j3ktI4YxjBYBTpAtuH+vE04VFsrelad7GmCuczDeyM=",
         "owner": "arpanghosh8453",
         "repo": "garmin-grafana",
-        "rev": "29a8d2440272cfe268dd2d06c64d98cba8ff1d1d",
+        "rev": "160a1f6fb1888d60b430e2ee999fbfdfb239581f",
         "type": "github"
       },
       "original": {
@@ -654,10 +654,10 @@
     "nixpkgs": {
       "locked": {
         "lastModified": 315532800,
-        "narHash": "sha256-QHC82DgcnDM+Tq+J2JrCWl1uMUqKJOFkZTk51DV9oE4=",
-        "rev": "2349f9de17183971db12ae9e0123dab132023bd7",
+        "narHash": "sha256-Qbg44vc/Vw971fY3/lIzDLJVmb992RTuKXL2A69/89w=",
+        "rev": "18dd725c29603f582cf1900e0d25f9f1063dbf11",
         "type": "tarball",
-        "url": "https://releases.nixos.org/nixpkgs/nixpkgs-25.05pre782330.2349f9de1718/nixexprs.tar.xz"
+        "url": "https://releases.nixos.org/nixpkgs/nixpkgs-25.05pre782598.18dd725c2960/nixexprs.tar.xz"
       },
       "original": {
         "type": "tarball",
@@ -809,11 +809,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1745782090,
-        "narHash": "sha256-c/mqxgOVDcwrdcY3FqG22MwLPGY5rCz5gte1sxISKnM=",
+        "lastModified": 1746146146,
+        "narHash": "sha256-60+mzI2lbgn+G8F5mz+cmkDvHFn4s5oqcOna1SzYy74=",
         "owner": "pyproject-nix",
         "repo": "pyproject.nix",
-        "rev": "2db2d95ddbc4ff5e29730cb82fdba6647be258a7",
+        "rev": "3e9623bdd86a3c545e82b7f97cfdba5f07232d9a",
         "type": "github"
       },
       "original": {
@@ -878,11 +878,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1744103455,
-        "narHash": "sha256-SR6+qjkPjGQG+8eM4dCcVtss8r9bre/LAxFMPJpaZeU=",
+        "lastModified": 1744669848,
+        "narHash": "sha256-pXyanHLUzLNd3MX9vsWG+6Z2hTU8niyphWstYEP3/GU=",
         "owner": "Mic92",
         "repo": "sops-nix",
-        "rev": "69d5a5a4635c27dae5a742f36108beccc506c1ba",
+        "rev": "61154300d945f0b147b30d24ddcafa159148026a",
         "type": "github"
       },
       "original": {
@@ -929,11 +929,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1743748085,
-        "narHash": "sha256-uhjnlaVTWo5iD3LXics1rp9gaKgDRQj6660+gbUU3cE=",
+        "lastModified": 1744707583,
+        "narHash": "sha256-IPFcShGro/UUp8BmwMBkq+6KscPlWQevZi9qqIwVUWg=",
         "owner": "numtide",
         "repo": "treefmt-nix",
-        "rev": "815e4121d6a5d504c0f96e5be2dd7f871e4fd99d",
+        "rev": "49d05555ccdd2592300099d6a657cc33571f4fe0",
         "type": "github"
       },
       "original": {
@@ -952,11 +952,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1745697651,
-        "narHash": "sha256-r4A/fkiCenEapHkjJWPiNUZEfviuXMCr6mRozJ5dC4o=",
+        "lastModified": 1746416492,
+        "narHash": "sha256-mBhC2T9DW7KrbFt9bKMKZS1z4bHQRu5i0s+A9bszErA=",
         "owner": "pyproject-nix",
         "repo": "uv2nix",
-        "rev": "cb6508484d534dafd097713b575f2aebc3417de0",
+        "rev": "e1738524915ff769ec8e2a6d982006368cf08a6f",
         "type": "github"
       },
       "original": {

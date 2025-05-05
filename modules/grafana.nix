@@ -1,6 +1,7 @@
 { pkgs, config, ... }:
 let
   grafana-user = "grafana";
+  grafana-group = "caddy";
   grafana-domain = "grafana.aiur.huesser.dev";
   grafana-socket = "/run/grafana/grafana.sock";
 in {
@@ -32,15 +33,9 @@ in {
       };
     };
 
-    provision = {
-      enable = true;
-      dashboards.settings.providers = [{
-        name = "Grafana Dashboards";
-        options.path = "/etc/grafana-dashboards";
-      }];
-    };
+    provision = { enable = true; };
   };
-  systemd.services.grafana.serviceConfig.Group = "caddy";
+  systemd.services.grafana.serviceConfig.Group = grafana-group;
 
   services.caddy.virtualHosts."${grafana-domain}".extraConfig = ''
     reverse_proxy /* unix/${grafana-socket}
