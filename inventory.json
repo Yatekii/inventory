@@ -1,0 +1,10 @@
+{
+  "machines": {
+    "help": {
+      "name": "help"
+    },
+    "hagrid": {
+      "name": "hagrid"
+    }
+  }
+}
