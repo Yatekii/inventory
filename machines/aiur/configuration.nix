@@ -33,16 +33,16 @@ let
       systemctl start conduwuit
     '';
   });
-  conduwuit-admin = (pkgs.writeShellApplication {
-    name = "conduwuit-admin";
-    runtimeInputs = [ conduwuit.packages.x86_64-linux.all-features ];
-    text = ''
-      systemctl stop conduwuit
-      export CONDUWUIT_CONFIG=${conduwuit-config};
-      ${conduwuit.packages.x86_64-linux.all-features}/bin/conduwuit --execute "$*" --execute "server shutdown"
-      systemctl start conduwuit
-    '';
-  });
+  # conduwuit-admin = (pkgs.writeShellApplication {
+  #   name = "conduwuit-admin";
+  #   runtimeInputs = [ conduwuit.packages.x86_64-linux.all-features ];
+  #   text = ''
+  #     systemctl stop conduwuit
+  #     export CONDUWUIT_CONFIG=${conduwuit-config};
+  #     ${conduwuit.packages.x86_64-linux.all-features}/bin/conduwuit --execute "$*" --execute "server shutdown"
+  #     systemctl start conduwuit
+  #   '';
+  # });
 
 in {
   imports = [
@@ -82,27 +82,27 @@ in {
     allowedTCPPorts = [ 80 443 8448 ];
   };
 
-  environment.systemPackages = [ conduwuit-backup conduwuit-admin ];
+  # environment.systemPackages = [ conduwuit-backup conduwuit-admin ];
 
-  services.conduwuit = {
-    enable = true;
-    package = conduwuit-package;
-    group = "caddy";
-    settings.global = {
-      server_name = "aiur.huesser.dev";
-      unix_socket_path = conduwuit-socket;
-      well_known = {
-        client = "https://matrix.aiur.huesser.dev";
-        server = "matrix.aiur.huesser.dev:443";
-        support_email = "noah@huesser.dev";
-      };
-      allow_registration = true;
-      registration_token_file =
-        config.clan.core.vars.generators.registration-token.files.registration-token.path;
-      admin_signal_execute = [ "server backup-database" ];
-      database_backup_path = conduwuit-backup-path;
-    };
-  };
+  # services.conduwuit = {
+  #   enable = true;
+  #   package = conduwuit-package;
+  #   group = "caddy";
+  #   settings.global = {
+  #     server_name = "aiur.huesser.dev";
+  #     unix_socket_path = conduwuit-socket;
+  #     well_known = {
+  #       client = "https://matrix.aiur.huesser.dev";
+  #       server = "matrix.aiur.huesser.dev:443";
+  #       support_email = "noah@huesser.dev";
+  #     };
+  #     allow_registration = true;
+  #     registration_token_file =
+  #       config.clan.core.vars.generators.registration-token.files.registration-token.path;
+  #     admin_signal_execute = [ "server backup-database" ];
+  #     database_backup_path = conduwuit-backup-path;
+  #   };
+  # };
   systemd.services.conduwuit.serviceConfig.StateDirectory =
     [ conduwuit-backup-path-relative ];
 

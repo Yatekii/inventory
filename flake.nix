@@ -5,7 +5,6 @@
   #   "git+https://git.clan.lol/Yatekii/clan-core?ref=init-restic";
   # inputs.clan-core.url = "path:///Users/yatekii/repos/clan-core";
   inputs.nixpkgs.follows = "clan-core/nixpkgs";
-  inputs.conduwuit.url = "github:girlbossceo/conduwuit?tag=0.5.0-rc3";
 
   inputs.pyproject-nix = {
     url = "github:pyproject-nix/pyproject.nix";
@@ -54,6 +53,7 @@
         inventory = {
           instances = {
             "backup" = {
+              module.input = "clan-core";
               module.name = "restic";
               roles.client.machines = { "aiur" = { }; };
               roles.client.settings = {

@@ -1,5 +1,4 @@
-{ lib, pkgs, config, uv2nix, garmin-grafana, pyproject-nix
-, pyproject-build-systems, ... }:
+{ lib, pkgs, config, inputs, ... }:
 let
   garmin-grafana-path = "/var/lib/garmin-grafana";
   garmin-grafana-path-relative = "garmin-grafana";
@@ -12,8 +11,9 @@ let
   influxdb-port = 8088;
   influxdb-host = "localhost";
 
-  workspace =
-    uv2nix.lib.workspace.loadWorkspace { workspaceRoot = garmin-grafana; };
+  workspace = inputs.uv2nix.lib.workspace.loadWorkspace {
+    workspaceRoot = inputs.garmin-grafana;
+  };
 
   overlay = workspace.mkPyprojectOverlay { sourcePreference = "wheel"; };
 
@@ -27,10 +27,10 @@ let
 
   python = pkgs.python313;
 
-  pythonSet = (pkgs.callPackage pyproject-nix.build.packages {
+  pythonSet = (pkgs.callPackage inputs.pyproject-nix.build.packages {
     inherit python;
   }).overrideScope (lib.composeManyExtensions [
-    pyproject-build-systems.overlays.default
+    inputs.pyproject-build-systems.overlays.default
     overlay
     pyprojectOverrides
   ]);
@@ -38,7 +38,7 @@ let
   venv = pythonSet.mkVirtualEnv "garmin-grafana-env" workspace.deps.default;
 
   garmin-grafana-derivation =
-    (pkgs.callPackages pyproject-nix.build.util { }).mkApplication {
+    (pkgs.callPackages inputs.pyproject-nix.build.util { }).mkApplication {
       venv = venv;
       package = pythonSet.garmin-grafana;
     };
@@ -70,7 +70,7 @@ in {
     files.influx-password = {
       owner = garmin-grafana-user;
       group = grafana-group;
-      mode = "440";
+      mode = "0440";
     };
     files.garmin-env = { owner = garmin-grafana-user; };
   };
@@ -91,7 +91,7 @@ in {
       MANUAL_END_DATE = "2025-12-31";
     };
     serviceConfig = {
-      ExecStart = lib.getExe garmin-grafana;
+      ExecStart = lib.getExe garmin-grafana-derivation;
       Group = garmin-grafana-user;
       User = garmin-grafana-user;
       StateDirectory = garmin-grafana-path-relative;
