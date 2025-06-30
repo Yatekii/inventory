@@ -17,7 +17,7 @@
       clan = clan-core.lib.buildClan {
         inherit self;
         # Ensure this is unique among all clans you want to use.
-        meta.name = "khalai";
+        meta.name = "khala";
 
         # All machines in ./machines will be imported.
 
@@ -96,15 +96,15 @@
         in {
           default = pkgs.mkShell {
             packages = [ clan-core.packages.${system}.clan-cli terraform ];
-        };
+          };
           dev = pkgs.mkShell {
             packages = [ pkgs.python3 terraform ];
-          shellHook = ''
-            export GIT_ROOT="$(git rev-parse --show-toplevel)"
-            export PATH=$PATH:~/repos/clan-core/pkgs/clan-cli/bin
-          '';
-        };
-      });
+            shellHook = ''
+              export GIT_ROOT="$(git rev-parse --show-toplevel)"
+              export PATH=$PATH:~/repos/clan-core/pkgs/clan-cli/bin
+            '';
+          };
+        });
 
       apps = clan-core.inputs.nixpkgs.lib.genAttrs [
         "x86_64-linux"
