@@ -43,21 +43,6 @@ let
       systemctl start conduwuit
     '';
   });
-
-  garmin-grafana = pkgs.python3Packages.buildPythonApplication rec {
-    pname = "garmin-grafana";
-    version = "v0.0.2";
-    src = pkgs.fetchFromGitHub rec {
-      inherit pname version;
-      name = pname;
-      rev = "961c6b0e291691bffba2d3a132fed4ccff9ab301";
-      owner = "Yatekii";
-      repo = "garmin-grafana";
-      sha256 = "sha256-HQyp2WOp6YgCujcMOR+iWJa10STUbshB3idLr04wAz8=";
-    };
-    pyproject = true;
-    meta = { mainProgram = "garmin-fetch.py"; };
-  };
 in {
   imports = [
     # contains your disk format and partitioning configuration.
@@ -157,16 +142,6 @@ in {
     folders = [ conduwuit-backup-path ];
     preBackupScript = "${conduwuit-backup}/bin/conduwuit-backup";
     postRestoreScript = "${conduwuit-backup}/bin/conduwuit-restore";
-  };
-
-  systemd.services."garmin-grafana" = {
-    enable = true;
-
-    serviceConfig = {
-      ExecStart = lib.getExe garmin-grafana;
-      Restart = "on-failure";
-    };
-    wantedBy = [ "multi-user.target" ];
   };
 
   programs.ssh.knownHosts = {
