@@ -118,7 +118,7 @@
             (p: [ p.external p.local p.hetznerdns p.null p.tls p.hcloud ]);
           terraformConfiguration = terranix.lib.terranixConfiguration {
             inherit system;
-            modules = [ ./machines/hagrid/machine.nix ./terraform/default.nix ];
+            modules = [ ./machines/fenix/machine.nix ./terraform/default.nix ];
           };
           terraform = pkgs.writeShellScriptBin "tofu" ''
             ${terraform_state_encryption}
