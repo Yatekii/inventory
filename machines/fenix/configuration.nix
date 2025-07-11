@@ -1,28 +1,27 @@
-{ lib, pkgs, names, ... }:
-# let hehe = lib.importJSON ./terraform.tfstate;
-{
+{ lib, pkgs, names, terraform_state_encryption, ... }:
+let
+  tofu = pkgs.opentofu.withPlugins
+    (p: [ p.external p.local p.hetznerdns p.null p.tls p.hcloud ]);
+  terraform = pkgs.writeShellScriptBin "tofu" ''
+    ${terraform_state_encryption}
+    exec ${tofu}/bin/tofu $@
+  '';
+  jq = pkgs.jq;
+  name = "fenix";
+  machine = (builtins.fromJSON (builtins.readFile ./../machines.json)).${name};
+  ip = machine.ipv4;
+  # let hehe = lib.importJSON ./terraform.tfstate;
+in {
   imports = [
     ../../modules/disko.nix
     ../../modules/shared.nix
     # ../../modules/vaultwarden.nix
   ];
 
-  # data.external.ip = {
-  #   program = [
-  #     # hehe
-  #     (lib.getExe (pkgs.writeShellApplication {
-  #       name = "get-ip";
-  #       text = ''
-  #         tofu show -json terraform.tfstate | jq '.values.root_module.resources | map(select(.name == "fenix")) | .[0].values.ipv4_address | { address: . }'
-  #       '';
-  #     }))
-  #   ];
-  # };
-
   # Set this for clan commands use ssh i.e. `clan machines update`
   # If you change the hostname, you need to update this line to root@<new-hostname>
   # This only works however if you have avahi running on your admin machine else use IP
-  clan.core.networking.targetHost = "root@142.132.172.209";
+  clan.core.networking.targetHost = "root@${ip}";
 
   # You can get your disk id by running the following command on the installer:
   # Replace <IP> with the IP of the installer printed on the screen or by running the `ip addr` command.

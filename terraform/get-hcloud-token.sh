@@ -1,0 +1,1 @@
+jq -n --arg secret "$(clan secrets get hcloud-token)" '{"secret":$secret}'

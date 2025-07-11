@@ -6,10 +6,29 @@
   # inputs.clan-core.url = "path:///Users/yatekii/repos/clan-core";
   inputs.nixpkgs.follows = "clan-core/nixpkgs";
   inputs.conduwuit.url = "github:girlbossceo/conduwuit?tag=0.5.0-rc3";
-  inputs.terranix.url = "github:terranix/terranix";
 
-  outputs = { self, nixpkgs, terranix, clan-core, conduwuit, ... }:
+  outputs = { self, nixpkgs, clan-core, conduwuit, ... }:
     let
+      terraform_state_encryption = ''
+        TF_VAR_passphrase=$(clan secrets get tf-passphrase)
+        export TF_VAR_passphrase
+        TF_ENCRYPTION=$(cat <<EOF
+        key_provider "pbkdf2" "state_encryption_password" {
+          passphrase = "$TF_VAR_passphrase"
+        }
+        method "aes_gcm" "encryption_method" {
+          keys = "\''${key_provider.pbkdf2.state_encryption_password}"
+        }
+        state {
+          enforced = true
+          method = "\''${method.aes_gcm.encryption_method}"
+        }
+        EOF
+        )
+
+        # shellcheck disable=SC2090
+        export TF_ENCRYPTION
+      '';
       hetzner-offsite-backup-user = "u415891";
       hetzner-offsite-backup-host =
         "${hetzner-offsite-backup-user}.your-storagebox.de";
@@ -52,29 +71,9 @@
           names = {
             hetzner-offsite-backup-host = hetzner-offsite-backup-host;
           };
+          inherit terraform_state_encryption;
         };
       };
-
-      terraform_state_encryption = ''
-        TF_VAR_passphrase=$(clan secrets get tf-passphrase)
-        export TF_VAR_passphrase
-        TF_ENCRYPTION=$(cat <<EOF
-        key_provider "pbkdf2" "state_encryption_password" {
-          passphrase = "$TF_VAR_passphrase"
-        }
-        method "aes_gcm" "encryption_method" {
-          keys = "\''${key_provider.pbkdf2.state_encryption_password}"
-        }
-        state {
-          enforced = true
-          method = "\''${method.aes_gcm.encryption_method}"
-        }
-        EOF
-        )
-
-        # shellcheck disable=SC2090
-        export TF_ENCRYPTION
-      '';
     in {
       inherit (clan) nixosConfigurations clanInternals;
       # Add the Clan cli tool to the dev shell.
@@ -116,13 +115,24 @@
           pkgs = nixpkgs.legacyPackages.${system};
           tofu = pkgs.opentofu.withPlugins
             (p: [ p.external p.local p.hetznerdns p.null p.tls p.hcloud ]);
-          terraformConfiguration = terranix.lib.terranixConfiguration {
-            inherit system;
-            modules = [ ./machines/fenix/machine.nix ./terraform/default.nix ];
-          };
-          terraform = pkgs.writeShellScriptBin "tofu" ''
+          wrappedTofu = pkgs.writeShellScriptBin "tofu" ''
             ${terraform_state_encryption}
-            exec ${tofu}/bin/tofu $@
+            exec ${tofu}/bin/tofu -chdir=terraform $@
+          '';
+          writeInventoryJson = ''
+            ${wrappedTofu} show -json terraform.tfstate \
+              | jq '.values.root_module.resources' \
+              | jq 'map(select(.type == "hcloud_server"))' \
+              | jq 'map({ (.name|tostring): { ipv4: .values.ipv4_address } })' \
+              | jq add > machines/machines.json
+          '';
+          fetchDiskId = ''
+            machines=$(cat machines/machines.json | jq -r 'to_entries[] | .value.ipv4')
+            for ip in $machines; do
+              host="root@$ip";
+              echo $host
+              ssh $host lsblk --output NAME,ID-LINK,FSTYPE,SIZE,MOUNTPOINT
+            done
           '';
         in {
           apply = {
@@ -130,10 +140,10 @@
             program = toString (pkgs.writers.writeBash "apply" ''
               set -eu
               ${terraform_state_encryption}
-              if [[ -e config.tf.json ]]; then rm -f config.tf.json; fi
-              cp ${terraformConfiguration} config.tf.json \
-                && ${terraform}/bin/tofu init \
-                && ${terraform}/bin/tofu apply
+              ${wrappedTofu} init \
+              && ${wrappedTofu} apply
+              ${writeInventoryJson}
+              ${fetchDiskId}
             '');
           };
           # nix run ".#destroy"
@@ -142,10 +152,9 @@
             program = toString (pkgs.writers.writeBash "destroy" ''
               set -eu
               ${terraform_state_encryption}
-              if [[ -e config.tf.json ]]; then rm -f config.tf.json; fi
-              cp ${terraformConfiguration} config.tf.json \
-                && ${terraform}/bin/tofu init \
-                && ${terraform}/bin/tofu destroy
+              ${wrappedTofu} init \
+              && ${wrappedTofu} destroy
+              ${writeInventoryJson}
             '');
           };
         });

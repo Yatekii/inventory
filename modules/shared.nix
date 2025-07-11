@@ -5,7 +5,6 @@
     # Set a root password
     clan-core.clanModules.root-password
     clan-core.clanModules.user-password
-    clan-core.clanModules.state-version
 
     clan-core.clanModules.trusted-nix-caches
   ];
