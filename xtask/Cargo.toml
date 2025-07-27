@@ -1,0 +1,11 @@
+[package]
+name = "xtask"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+serde_json = { version = "1" }
+xshell = "0.2"
+anyhow = "1"
+serde = { version = "1", features = ["derive"], default-features = false }

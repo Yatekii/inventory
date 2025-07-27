@@ -3,3 +3,4 @@
 config.tf.json
 terraform.tfstate.backup
 result
+**/target

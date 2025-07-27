@@ -1,16 +1,9 @@
-{ lib, pkgs, names, terraform_state_encryption, ... }:
+{ names, ... }:
 let
-  tofu = pkgs.opentofu.withPlugins
-    (p: [ p.external p.local p.hetznerdns p.null p.tls p.hcloud ]);
-  terraform = pkgs.writeShellScriptBin "tofu" ''
-    ${terraform_state_encryption}
-    exec ${tofu}/bin/tofu $@
-  '';
-  jq = pkgs.jq;
   name = "fenix";
   machine = (builtins.fromJSON (builtins.readFile ./../machines.json)).${name};
   ip = machine.ipv4;
-  # let hehe = lib.importJSON ./terraform.tfstate;
+  disk-id = machine.disk_id;
 in {
   imports = [
     ../../modules/disko.nix
@@ -26,8 +19,7 @@ in {
   # You can get your disk id by running the following command on the installer:
   # Replace <IP> with the IP of the installer printed on the screen or by running the `ip addr` command.
   # ssh root@<IP> lsblk --output NAME,ID-LINK,FSTYPE,SIZE,MOUNTPOINT
-  disko.devices.disk.main.device =
-    "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_59606587";
+  disko.devices.disk.main.device = "/dev/disk/by-id/${disk-id}";
 
   # IMPORTANT! Add your SSH key here
   # e.g. > cat ~/.ssh/id_ed25519.pub

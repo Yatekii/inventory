@@ -8,13 +8,6 @@ provider "registry.opentofu.org/hashicorp/external" {
   ]
 }
 
-provider "registry.opentofu.org/hashicorp/hcloud" {
-  version = "1.51.0"
-  hashes = [
-    "h1:fsrAeA1w3ZI6VmAHUHYODU4izQs6mwbaDlbTBN1+3AM=",
-  ]
-}
-
 provider "registry.opentofu.org/hetznercloud/hcloud" {
   version     = "1.51.0"
   constraints = ">= 1.51.0"

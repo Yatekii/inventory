@@ -9,7 +9,7 @@
 
   outputs = { self, nixpkgs, clan-core, conduwuit, ... }:
     let
-      terraform_state_encryption = ''
+      terraformStateEncryption = ''
         TF_VAR_passphrase=$(clan secrets get tf-passphrase)
         export TF_VAR_passphrase
         TF_ENCRYPTION=$(cat <<EOF
@@ -71,7 +71,7 @@
           names = {
             hetzner-offsite-backup-host = hetzner-offsite-backup-host;
           };
-          inherit terraform_state_encryption;
+          inherit terraformStateEncryption;
         };
       };
     in {
@@ -88,16 +88,28 @@
           pkgs = nixpkgs.legacyPackages.${system};
           tofu = pkgs.opentofu.withPlugins
             (p: [ p.external p.local p.hetznerdns p.null p.tls p.hcloud ]);
-          terraform = pkgs.writeShellScriptBin "tofu" ''
-            ${terraform_state_encryption}
+          wrappedTofu = pkgs.writeShellScriptBin "tofu" ''
+            ${terraformStateEncryption}
             exec ${tofu}/bin/tofu $@
+          '';
+          xtask = pkgs.writeShellScriptBin "xtask" ''
+            cd xtask
+            cargo run -- $@
+          '';
+          getCloudToken = pkgs.writeShellScriptBin "get-hcloud-token" ''
+            jq -n --arg secret "$(clan secrets get hcloud-token)" '{"secret":$secret}'
           '';
         in {
           default = pkgs.mkShell {
-            packages = [ clan-core.packages.${system}.clan-cli terraform ];
+            packages = [
+              clan-core.packages.${system}.clan-cli
+              wrappedTofu
+              xtask
+              getCloudToken
+            ];
           };
           dev = pkgs.mkShell {
-            packages = [ pkgs.python3 terraform ];
+            packages = [ pkgs.python3 wrappedTofu ];
             shellHook = ''
               export GIT_ROOT="$(git rev-parse --show-toplevel)"
               export PATH=$PATH:~/repos/clan-core/pkgs/clan-cli/bin
@@ -116,34 +128,41 @@
           tofu = pkgs.opentofu.withPlugins
             (p: [ p.external p.local p.hetznerdns p.null p.tls p.hcloud ]);
           wrappedTofu = pkgs.writeShellScriptBin "tofu" ''
-            ${terraform_state_encryption}
+            ${terraformStateEncryption}
             exec ${tofu}/bin/tofu -chdir=terraform $@
           '';
-          writeInventoryJson = ''
-            ${wrappedTofu} show -json terraform.tfstate \
-              | jq '.values.root_module.resources' \
-              | jq 'map(select(.type == "hcloud_server"))' \
-              | jq 'map({ (.name|tostring): { ipv4: .values.ipv4_address } })' \
-              | jq add > machines/machines.json
+          xtask = pkgs.writeShellScriptBin "xtask" ''
+            cd xtask
+            cargo run -- $@
           '';
-          fetchDiskId = ''
-            machines=$(cat machines/machines.json | jq -r 'to_entries[] | .value.ipv4')
-            for ip in $machines; do
-              host="root@$ip";
-              echo $host
-              ssh $host lsblk --output NAME,ID-LINK,FSTYPE,SIZE,MOUNTPOINT
-            done
+          writeInventoryJson = ''
+            root=$PWD
+            ${xtask}/bin/xtask --root=$root derive-machines-json ${wrappedTofu}/bin/tofu 'terraform.tfstate' machines/machines.json
+          '';
+          fetchDiskIds = ''
+            root=$PWD
+            ${xtask}/bin/xtask --root=$root gather-disk-ids machines/machines.json
+          '';
+          gather-terraform-files = ''
+            root=$PWD
+            ${xtask}/bin/xtask --root=$root gather-terraform-files machines terraform
+          '';
+          clean-terraform-files = ''
+            root=$PWD
+            ${xtask}/bin/xtask --root=$root clean-terraform-files terraform
           '';
         in {
           apply = {
             type = "app";
             program = toString (pkgs.writers.writeBash "apply" ''
               set -eu
-              ${terraform_state_encryption}
-              ${wrappedTofu} init \
-              && ${wrappedTofu} apply
+              ${terraformStateEncryption}
+              ${gather-terraform-files}
+              ${wrappedTofu}/bin/tofu init \
+              && ${wrappedTofu}/bin/tofu apply
               ${writeInventoryJson}
-              ${fetchDiskId}
+              ${fetchDiskIds}
+              ${clean-terraform-files}
             '');
           };
           # nix run ".#destroy"
@@ -151,10 +170,12 @@
             type = "app";
             program = toString (pkgs.writers.writeBash "destroy" ''
               set -eu
-              ${terraform_state_encryption}
-              ${wrappedTofu} init \
-              && ${wrappedTofu} destroy
+              ${terraformStateEncryption}
+              ${gather-terraform-files}
+              ${wrappedTofu}/bin/tofu init \
+              && ${wrappedTofu}/bin/tofu destroy
               ${writeInventoryJson}
+              ${clean-terraform-files}
             '');
           };
         });
