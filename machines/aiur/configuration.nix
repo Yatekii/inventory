@@ -56,6 +56,7 @@ in {
   # If you change the hostname, you need to update this line to root@<new-hostname>
   # This only works however if you have avahi running on your admin machine else use IP
   clan.core.networking.targetHost = "root@142.132.172.209";
+  clan.core.networking.buildHost = "root@142.132.172.209";
 
   # You can get your disk id by running the following command on the installer:
   # Replace <IP> with the IP of the installer printed on the screen or by running the `ip addr` command.
@@ -65,10 +66,10 @@ in {
 
   # IMPORTANT! Add your SSH key here
   # e.g. > cat ~/.ssh/id_ed25519.pub
-  users.users.root.openssh.authorizedKeys.keys = [''
-    ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH/zWoCMabsPjao7AZKfA1jvokjbOBxyGHHKOwTA9krw auraya
-    ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJQC2K0wDAi6HBOn0kXGBGRw4zjdGivMCSF84P/w7y2f arcturo
-  ''];
+  users.users.root.openssh.authorizedKeys.keys = [
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH/zWoCMabsPjao7AZKfA1jvokjbOBxyGHHKOwTA9krw auraya"
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJQC2K0wDAi6HBOn0kXGBGRw4zjdGivMCSF84P/w7y2f arcturo"
+  ];
 
   # Zerotier needs one controller to accept new nodes. Once accepted
   # the controller can be offline and routing still works.
