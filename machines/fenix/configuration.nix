@@ -3,24 +3,13 @@ let
   name = "fenix";
   machine = (builtins.fromJSON (builtins.readFile ./../machines.json)).${name};
   ip = machine.ipv4;
-  disk-id = machine.disk_id;
 in {
-  imports = [
-    ../../modules/disko.nix
-    ../../modules/shared.nix
-    # ../../modules/vaultwarden.nix
-  ];
+  imports = [ ../../modules/shared.nix ../../modules/vaultwarden.nix ];
 
   # Set this for clan commands use ssh i.e. `clan machines update`
   # If you change the hostname, you need to update this line to root@<new-hostname>
   # This only works however if you have avahi running on your admin machine else use IP
   clan.core.networking.targetHost = "root@${ip}";
-  clan.core.networking.buildHost = "root@${ip}";
-
-  # You can get your disk id by running the following command on the installer:
-  # Replace <IP> with the IP of the installer printed on the screen or by running the `ip addr` command.
-  # ssh root@<IP> lsblk --output NAME,ID-LINK,FSTYPE,SIZE,MOUNTPOINT
-  disko.devices.disk.main.device = "/dev/disk/by-id/${disk-id}";
 
   # IMPORTANT! Add your SSH key here
   # e.g. > cat ~/.ssh/id_ed25519.pub

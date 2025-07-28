@@ -1,11 +1,8 @@
-# ---
-# schema = "single-disk"
-# [placeholders]
-# mainDisk = "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_101144156" 
-# ---
-# This file was automatically generated!
-# CHANGING this configuration requires wiping and reinstalling the machine
-{
+let
+  name = "fenix";
+  machine = (builtins.fromJSON (builtins.readFile ./../machines.json)).${name};
+  disk-id = machine.disk_id;
+in {
 
   boot.loader.grub.efiSupport = true;
   boot.loader.grub.efiInstallAsRemovable = true;
@@ -14,7 +11,7 @@
     disk = {
       main = {
         name = "main-5bca8fad00c94569948a0a25c1200f08";
-        device = "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_101144156";
+        device = "/dev/disk/by-id/${disk-id}";
         type = "disk";
         content = {
           type = "gpt";
