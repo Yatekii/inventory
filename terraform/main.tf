@@ -5,6 +5,16 @@ terraform {
       version = ">= 1.51"
     }
   }
+
+  encryption {
+    method "aes_gcm" "encryption_method" {
+      keys = key_provider.pbkdf2.state_encryption_password
+    }
+    state {
+      enforced = true
+      method = method.aes_gcm.encryption_method
+    }
+  }
 }
 
 data "external" "hcloud-token" {
