@@ -1,5 +1,7 @@
 # Khala
 
+Run `./install` once on a brand new user machine.
+
 ## Provisioning a new machine
 
 - Add a subdirectory with the machine `<name>` in `/machines`.
