@@ -2,6 +2,9 @@
 
 Run `./install` once on a brand new user machine.
 
+$ nix run nix-darwin --extra-experimental-features nix-command --extra-experimental-features flakes -- switch --flake ~/.config/nix
+
+
 ## Provisioning a new machine
 
 - Add a subdirectory with the machine `<name>` in `/machines`.

@@ -10,6 +10,9 @@
     # We use flake-parts to modularaize our flake
     flake-parts.url = "github:hercules-ci/flake-parts";
     flake-parts.inputs.nixpkgs-lib.follows = "nixpkgs";
+
+    home-manager.url = "github:nix-community/home-manager";
+    home-manager.inputs.nixpkgs.follows = "clan-core/nixpkgs";
   };
 
   outputs = inputs@{ self, flake-parts, nixpkgs, clan-core, ... }:
@@ -17,47 +20,6 @@
       hetzner-offsite-backup-user = "u415891";
       hetzner-offsite-backup-host =
         "${hetzner-offsite-backup-user}.your-storagebox.de";
-      # Usage see: https://docs.clan.lol
-      clan = clan-core.lib.clan {
-        inherit self;
-        # Ensure this is unique among all clans you want to use.
-        meta.name = "khala";
-
-        # All machines in ./machines will be imported.
-
-        # Prerequisite: boot into the installer.
-        # See: https://docs.clan.lol/getting-started/installer
-        # local> mkdir -p ./machines/machine1
-        # local> Edit ./machines/<machine>/configuration.nix to your liking.
-        machines = {
-          # "aiur" = { clan.core.networking.buildHost = "root@localhost"; };
-        };
-
-        # inventory.services.restic.clan-backup = {
-        #   roles.client.machines = [
-        #     "aiur"
-        #   ]; # TODO: How do I reference this programmatically instead of by string?
-
-        #   roles.client.config = {
-        #     destinations = {
-        #       hetzner-offsite-backup.externalTarget.connectionString =
-        #         "rclone:${hetzner-offsite-backup-host}";
-        #       hetzner-offsite-backup.externalTarget.rclone = {
-        #         host = hetzner-offsite-backup-host;
-        #         user = hetzner-offsite-backup-user;
-        #         port = 23;
-        #       };
-        #     };
-        #   };
-        # };
-
-        specialArgs = {
-          names = {
-            hetzner-offsite-backup-host = hetzner-offsite-backup-host;
-          };
-          inherit terraformStateEncryption;
-        };
-      };
     in
       flake-parts.lib.mkFlake {
         inherit inputs;
@@ -87,7 +49,33 @@
           # Clan wide settings
           meta.name = "khala";
 
-          machines = {};
+          inventory = {
+            machines.auraya.machineClass = "darwin";
+          };
+
+          specialArgs = {
+            names = {
+              hetzner-offsite-backup-host = hetzner-offsite-backup-host;
+            };
+          };
+
+          # inventory.services.restic.clan-backup = {
+          #   roles.client.machines = [
+          #     "aiur"
+          #   ]; # TODO: How do I reference this programmatically instead of by string?
+
+          #   roles.client.config = {
+          #     destinations = {
+          #       hetzner-offsite-backup.externalTarget.connectionString =
+          #         "rclone:${hetzner-offsite-backup-host}";
+          #       hetzner-offsite-backup.externalTarget.rclone = {
+          #         host = hetzner-offsite-backup-host;
+          #         user = hetzner-offsite-backup-user;
+          #         port = 23;
+          #       };
+          #     };
+          #   };
+          # };
         };
       });
 }
