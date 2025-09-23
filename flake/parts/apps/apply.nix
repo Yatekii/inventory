@@ -1,10 +1,13 @@
 { helpers, inputs, ... }:
 {
   perSystem = { system, pkgs, ...}: {
-    # Add the Clan cli tool to the dev shell.
-    # Use "nix develop" to enter the dev shell.
     apps = {
-      apply = helpers.terraform.mkTerraformCommand "apply";
+      apply = {
+        type = "app";
+        program = toString (pkgs.writers.writeBash "apply" ''
+          sudo nix run nix-darwin/master#darwin-rebuild -- switch --flake .#auraya
+        '');
+      };
     };
   };
 }

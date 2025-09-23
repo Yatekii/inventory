@@ -1,6 +1,6 @@
 { pkgs, lib }:
 {
-  mkTerraformCommand: command =
+  mkTerraformCommand: name: command =
     let
       tofu = mkTofu pkgs;
       xtask = mkXtask pkgs;
@@ -10,7 +10,7 @@
       cleanTerraformFiles = mkCleanTerraformFiles xtask;
     in {
       type = "app";
-      program = toString (pkgs.writers.writeBash command ''
+      program = toString (pkgs.writers.writeBash name ''
         set -eu
         ${gatherTerraformFiles}
         ${tofu}/bin/tofu init \
