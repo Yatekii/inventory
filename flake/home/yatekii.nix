@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib', ... }:
 {
   users.users.yatekii = {
     name = "yatekii";
@@ -11,6 +11,8 @@
     # paths it should manage.
     home.username = "yatekii";
     home.homeDirectory = "/Users/yatekii";
+
+    imports = lib'.collectModules ./modules;
 
     # This value determines the Home Manager release that your
     # configuration is compatible with. This helps avoid breakage

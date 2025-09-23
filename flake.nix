@@ -20,6 +20,7 @@
       hetzner-offsite-backup-user = "u415891";
       hetzner-offsite-backup-host =
         "${hetzner-offsite-backup-user}.your-storagebox.de";
+      lib' = import ./flake/lib/default.nix { inherit inputs; };
     in
       flake-parts.lib.mkFlake {
         inherit inputs;
@@ -27,6 +28,7 @@
           helpers = import ./flake/helpers {
             inherit inputs;
           };
+          lib' = lib';
         };
       } ({self, pkgs, ...}: {
         # See: https://flake.parts/getting-started
@@ -57,6 +59,7 @@
             names = {
               hetzner-offsite-backup-host = hetzner-offsite-backup-host;
             };
+            lib' = lib';
           };
 
           # inventory.services.restic.clan-backup = {
