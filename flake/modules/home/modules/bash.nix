@@ -4,5 +4,5 @@
 
 { pkgs, ... }:
 {
-  programs.bash.enable = true;
+  flake.modules.programs.bash.enable = true;
 }

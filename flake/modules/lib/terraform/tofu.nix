@@ -16,12 +16,23 @@ let
   '';
 in
 {
-    mkTofu = pkgs:
-      let
-        tofu = pkgs.opentofu.withPlugins (p: [ p.external p.local p.hetznerdns p.null p.tls p.hcloud ]);
-      in
+  perSystem =
+    { pkgs, ... }:
+    {
+      flake.lib.tf.tofu =
+        let
+          tofu = pkgs.opentofu.withPlugins (p: [
+            p.external
+            p.local
+            p.hetznerdns
+            p.null
+            p.tls
+            p.hcloud
+          ]);
+        in
         pkgs.writeShellScriptBin "tofu" ''
           ${terraformStateEncryption}
           exec ${tofu}/bin/tofu -chdir=terraform $@
         '';
+    };
 }

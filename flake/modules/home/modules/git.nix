@@ -1,6 +1,6 @@
 { ... }:
 {
-  programs.git = {
+  flake.modules.programs.git = {
     enable = true;
     userName = "Noah Hüsser";
     userEmail = "noahs@huesser.dev";

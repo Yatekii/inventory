@@ -32,7 +32,7 @@ in
 {
   imports = [
     self.inputs.home-manager.darwinModules.default
-    ../../flake/home/yatekii.nix
+    # ../../flake/home/yatekii.nix
     self.inputs.nix-homebrew.darwinModules.nix-homebrew
     config-home-manager
   ];

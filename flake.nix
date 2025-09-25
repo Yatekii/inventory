@@ -65,19 +65,12 @@
         inherit inputs;
       }
       (
-        args@{ self, pkgs, ... }:
+        { self, pkgs, ... }:
+        let
+          lib = inputs.nixpkgs.lib;
+          modulesPath = ./flake/modules;
+        in
         {
-          flake = {
-            lib = import ./flake/lib/default.nix (
-              args
-              // {
-                inherit inputs;
-                inherit self;
-                inherit pkgs;
-              }
-            );
-          };
-
           # See: https://flake.parts/getting-started
           systems = [
             "x86_64-linux"
@@ -87,11 +80,42 @@
           ];
 
           # Import the Clan flake-parts module
-          imports = [
-            ./flake/parts
-            clan-core.flakeModules.default
-            rust-overlay-module
-          ];
+          imports =
+            [
+              clan-core.flakeModules.default
+              rust-overlay-module
+              {
+                perSystem =
+                  { ... }:
+                  {
+                    options.flake.lib = lib.mkOption {
+                      type = lib.types.submodule {
+                        freeformType = lib.types.attrsOf lib.types.anything;
+                      };
+                      default = { };
+                      description = ''
+                        A collection of functions to be used in this flake.
+                      '';
+                      example = lib.literalExpression ''
+                        {
+                        }
+                      '';
+                    };
+                  };
+              }
+            ]
+            ++ (
+              modulesPath
+              |> lib.filesystem.listFilesRecursive
+              |> lib.filter (lib.hasSuffix ".nix")
+              |> lib.filter (
+                path:
+                path
+                |> lib.path.removePrefix modulesPath
+                |> lib.path.subpath.components
+                |> lib.all (component: !(lib.hasPrefix "_" component))
+              )
+            );
 
           # Define your Clan
           # See: https://docs.clan.lol/reference/nix-api/clan/

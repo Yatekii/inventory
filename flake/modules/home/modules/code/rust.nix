@@ -1,5 +1,4 @@
 {
-  self,
   pkgs,
   ...
 }:
@@ -10,7 +9,8 @@
 #   };
 # in
 {
-  home.packages = [
+  flake.modules.home.packages = [
+    pkgs.fzf
     # self.inputs.nixpkgs.legacyPackages.aarch64-darwin.pkgs.rust-bin.beta.latest.default
   ];
 }
