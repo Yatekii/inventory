@@ -1,5 +1,5 @@
 # helper.nix
-{ pkgs, lib }:
+{ ... }:
 {
   mkCleanTerraformFiles = xtask: ''
     root=$PWD

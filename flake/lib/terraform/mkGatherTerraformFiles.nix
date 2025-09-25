@@ -1,5 +1,5 @@
 # helper.nix
-{ pkgs, lib }:
+{ ... }:
 {
   mkGatherTerraformFiles = xtask: ''
     root=$PWD

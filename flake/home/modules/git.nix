@@ -1,13 +1,9 @@
-{ pkgs, ... }:
+{ ... }:
 {
-  home.packages = [
-    pkgs.git
-  ];
-
   programs.git = {
     enable = true;
     userName = "Noah Hüsser";
-    userEmail = "noah@huesser.dev";
+    userEmail = "noahs@huesser.dev";
     aliases = {
       co = "checkout";
       caa = "commit --amend -a --no-edit";

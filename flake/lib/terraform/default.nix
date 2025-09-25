@@ -4,7 +4,7 @@ let
     ${name} = (import (./. + "/${name}.nix") args).${name};
   };
 in
-{}
+{ }
 // (mkImport "mkTofu")
 // (mkImport "mkXtask")
 // (mkImport "mkGetCloudToken")

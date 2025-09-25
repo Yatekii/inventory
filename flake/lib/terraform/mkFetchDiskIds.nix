@@ -1,5 +1,5 @@
 # helper.nix
-{ pkgs, lib }:
+{ ... }:
 {
   mkFetchDiskIds = xtask: ''
     root=$PWD
