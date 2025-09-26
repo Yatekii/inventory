@@ -85,23 +85,17 @@
               clan-core.flakeModules.default
               rust-overlay-module
               {
-                perSystem =
-                  { ... }:
-                  {
-                    options.flake.lib = lib.mkOption {
-                      type = lib.types.submodule {
-                        freeformType = lib.types.attrsOf lib.types.anything;
-                      };
-                      default = { };
-                      description = ''
-                        A collection of functions to be used in this flake.
-                      '';
-                      example = lib.literalExpression ''
-                        {
-                        }
-                      '';
-                    };
-                  };
+                options.flake.lib = lib.mkOption {
+                  type = lib.types.attrsOf lib.types.anything;
+                  default = { };
+                  description = ''
+                    A collection of functions to be used in this flake.
+                  '';
+                  example = lib.literalExpression ''
+                    {
+                    }
+                  '';
+                };
               }
             ]
             ++ (

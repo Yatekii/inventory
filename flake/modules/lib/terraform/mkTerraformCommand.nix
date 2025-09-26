@@ -4,6 +4,7 @@
     { pkgs, config, ... }:
     let
       lib = config.flake.lib.tf;
+      lib2 = config.flake.lib.tf2;
     in
     {
       flake.lib.tf.mkTerraformCommand = name: command: {
@@ -12,9 +13,8 @@
           pkgs.writers.writeBash name ''
             set -eu
             ${lib.gatherTerraformFiles}
-            ${lib.tofu}/bin/tofu init \
-            && ${lib.tofu}/bin/tofu ${command}
-            ${lib.writeInventoryJson}
+            ${lib2.tofu}/bin/tofu init \
+            && ${lib2.tofu}/bin/tofu ${command}
             ${lib.fetchDiskIds}
             ${lib.cleanTerraformFiles}
           ''

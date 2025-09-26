@@ -1,5 +1,3 @@
-# helper.nix
-{ ... }:
 let
   terraformStateEncryption = ''
     TF_VAR_passphrase=$(clan secrets get tf-passphrase)
