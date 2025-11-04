@@ -7,8 +7,9 @@
       # Use "nix develop" to enter the dev shell.
       devShells =
         let
-          tofu = self.lib.terraform.mkTofu pkgs;
-          xtask = self.lib.terraform.mkXtask pkgs;
+          tofu = self.lib.tf.tofu pkgs;
+          xtask = self.lib.tf.xtask pkgs;
+          # TODO: Maybe, instead of putting this command into the devshell, make it a part of flake apps.
           getCloudToken = self.lib.terraform.mkGetCloudToken pkgs;
           packages = [
             pkgs.git

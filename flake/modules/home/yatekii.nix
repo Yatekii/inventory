@@ -10,7 +10,7 @@
       inherit self;
     };
 
-    home-manager.users.yatekii =
+    home-manager.yatekii =
       { pkgs, ... }:
       {
         # Home Manager needs a bit of information about you and the
@@ -35,7 +35,9 @@
 
         home.packages = [
           pkgs.ripgrep
-          pkgs.bat
+          # pkgs.bat
+          pkgs.direnv
+          pkgs.fzf
         ];
       };
   };

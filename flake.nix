@@ -53,7 +53,7 @@
             _module.args.pkgs = import nixpkgs {
               inherit system;
               overlays = [
-                rust-overlay.overlays.default
+                (import rust-overlay)
               ];
               config = { };
             };
@@ -84,18 +84,23 @@
             [
               clan-core.flakeModules.default
               rust-overlay-module
+              inputs.home-manager.flakeModules.home-manager
               {
-                options.flake.lib = lib.mkOption {
-                  type = lib.types.attrsOf lib.types.anything;
-                  default = { };
-                  description = ''
-                    A collection of functions to be used in this flake.
-                  '';
-                  example = lib.literalExpression ''
-                    {
-                    }
-                  '';
-                };
+                perSystem =
+                  { ... }:
+                  {
+                    options.flake.lib = lib.mkOption {
+                      type = lib.types.attrsOf lib.types.anything;
+                      default = { };
+                      description = ''
+                        A collection of functions to be used in this flake.
+                      '';
+                      example = lib.literalExpression ''
+                        {
+                        }
+                      '';
+                    };
+                  };
               }
             ]
             ++ (

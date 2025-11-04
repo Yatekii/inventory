@@ -84,6 +84,11 @@ fn clean_terraform_files(root: PathBuf, terraform: PathBuf) -> Result<()> {
     Ok(())
 }
 
+/// Get all the terraform files that describe the machines and copy them into the same tree.
+/// This is required because terraform has horrible file management and we want to keep the
+/// terraform files close to the machine spec.
+/// Because terraform has no includes, we copy the files to the right place with this command
+/// to then run terraform and clean up the files later.
 fn gather_terraform_files(root: PathBuf, machines: PathBuf, terraform: PathBuf) -> Result<()> {
     std::env::set_current_dir(&root)?;
 
@@ -91,14 +96,12 @@ fn gather_terraform_files(root: PathBuf, machines: PathBuf, terraform: PathBuf) 
         if file.path().extension().unwrap_or_default() == "tf" {
             std::fs::copy(
                 file.path(),
-                dbg!(
-                    terraform.join(
-                        Path::new(&format!(
-                            "_{}",
-                            file.path().parent().unwrap().file_stem().unwrap().display()
-                        ))
-                        .with_extension("tf")
-                    )
+                terraform.join(
+                    Path::new(&format!(
+                        "_{}",
+                        file.path().parent().unwrap().file_stem().unwrap().display()
+                    ))
+                    .with_extension("tf"),
                 ),
             )
             .with_context(|| anyhow!("{file:?} could not be copied"))?;

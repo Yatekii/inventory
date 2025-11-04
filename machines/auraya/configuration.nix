@@ -32,10 +32,12 @@ in
 {
   imports = [
     self.inputs.home-manager.darwinModules.default
-    # ../../flake/home/yatekii.nix
+    # TODO: Import self.modules properly
     self.inputs.nix-homebrew.darwinModules.nix-homebrew
     config-home-manager
   ];
+
+  home-manager.useUserPackages = true;
 
   # Used for clan to connect to the host when running any of the machine commands.
   clan.core.networking.targetHost = "yatekii@localhost";

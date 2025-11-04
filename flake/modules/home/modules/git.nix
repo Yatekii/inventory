@@ -17,5 +17,6 @@
       key = "/Users/yatekii/.ssh/id_ed25519.pub";
       signByDefault = true;
     };
+    push.autoSetupRemote = true;
   };
 }
