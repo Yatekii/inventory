@@ -83,6 +83,7 @@
           imports =
             [
               clan-core.flakeModules.default
+              inputs.flake-parts.flakeModules.modules
               rust-overlay-module
               inputs.home-manager.flakeModules.home-manager
               {

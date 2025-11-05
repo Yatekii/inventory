@@ -15,7 +15,8 @@
     {
       home.packages = [
         pkgs.fzf
-
+        throw
+        "evaluated!"
         pkgs.legacyPackages.aarch64-darwin.pkgs.rust-bin.beta.latest.default
       ];
     };
