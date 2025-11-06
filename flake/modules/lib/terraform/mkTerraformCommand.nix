@@ -3,7 +3,7 @@
   perSystem =
     { pkgs, config, ... }:
     let
-      lib = config.flake.lib.tf;
+      lib = config.flake.lib;
     in
     {
       flake.lib.tf.mkTerraformCommand = name: command: {

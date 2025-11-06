@@ -1,16 +1,24 @@
 { self, inputs, ... }:
 {
   perSystem =
-    { system, pkgs, ... }:
+    {
+      system,
+      pkgs,
+      config,
+      ...
+    }:
+    let
+      lib = config.flake.lib;
+    in
     {
       # Add the Clan cli tool to the dev shell.
       # Use "nix develop" to enter the dev shell.
       devShells =
         let
-          tofu = self.lib.tf.tofu pkgs;
-          xtask = self.lib.tf.xtask pkgs;
+          tofu = lib.tf.tofu;
+          xtask = lib.xtask;
           # TODO: Maybe, instead of putting this command into the devshell, make it a part of flake apps.
-          getCloudToken = self.lib.terraform.mkGetCloudToken pkgs;
+          getCloudToken = lib.tf.getCloudToken;
           packages = [
             pkgs.git
             tofu

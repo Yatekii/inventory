@@ -63,6 +63,7 @@
     flake-parts.lib.mkFlake
       {
         inherit inputs;
+        inherit self;
       }
       (
         { self, pkgs, ... }:

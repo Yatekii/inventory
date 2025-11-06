@@ -1,4 +1,11 @@
-{ config, pkgs, lib, sources, names, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  sources,
+  names,
+  ...
+}:
 let
   conduwuit-package = sources.conduwuit.packages.x86_64-linux.all-features;
   conduwuit-socket = "/run/conduwuit/conduwuit.sock";
@@ -7,43 +14,51 @@ let
   conduwuit-backup-path = "/var/lib/${conduwuit-backup-path-relative}";
   conduwuit-restore-path = "/var/lib/conduwuit-restore";
   conduwuit-user = "conduwuit";
-  conduwuit-config = (pkgs.formats.toml { }).generate "conduwuit.toml"
-    (config.services.conduwuit).settings;
-  conduwuit-backup = (pkgs.writeShellApplication {
-    name = "conduwuit-backup";
-    runtimeInputs = [ ];
-    text = ''
-      set -eu
-      PID=$(systemctl show --property MainPID --value conduwuit)
-      kill -s SIGUSR2 "$PID"
-    '';
-  });
-  conduwuit-restore = (pkgs.writeShellApplication {
-    name = "conduwuit-restore";
-    runtimeInputs = [ ];
-    text = ''
-      set -eu
-      systemctl stop conduwuit
-      # create a new directory for merging together the data
-      mkdir ${conduwuit-restore-path}
-      cd ${conduwuit-restore-path}
-      cp ${conduwuit-backup-path}/shared_checksum/*.sst .
-      for file in *.sst; do mv "$file" "$(echo "$file" | sed 's/_s.*/.sst/')"; done
-      mv ${conduwuit-restore-path} ${conduwuit-path}
-      systemctl start conduwuit
-    '';
-  });
-  conduwuit-admin = (pkgs.writeShellApplication {
-    name = "conduwuit-admin";
-    runtimeInputs = [ sources.conduwuit.packages.x86_64-linux.all-features ];
-    text = ''
-      systemctl stop conduwuit
-      export CONDUWUIT_CONFIG=${conduwuit-config};
-      ${sources.conduwuit.packages.x86_64-linux.all-features}/bin/conduwuit --execute "$*" --execute "server shutdown"
-      systemctl start conduwuit
-    '';
-  });
-in {
+  conduwuit-config =
+    (pkgs.formats.toml { }).generate "conduwuit.toml"
+      (config.services.conduwuit).settings;
+  conduwuit-backup = (
+    pkgs.writeShellApplication {
+      name = "conduwuit-backup";
+      runtimeInputs = [ ];
+      text = ''
+        set -eu
+        PID=$(systemctl show --property MainPID --value conduwuit)
+        kill -s SIGUSR2 "$PID"
+      '';
+    }
+  );
+  conduwuit-restore = (
+    pkgs.writeShellApplication {
+      name = "conduwuit-restore";
+      runtimeInputs = [ ];
+      text = ''
+        set -eu
+        systemctl stop conduwuit
+        # create a new directory for merging together the data
+        mkdir ${conduwuit-restore-path}
+        cd ${conduwuit-restore-path}
+        cp ${conduwuit-backup-path}/shared_checksum/*.sst .
+        for file in *.sst; do mv "$file" "$(echo "$file" | sed 's/_s.*/.sst/')"; done
+        mv ${conduwuit-restore-path} ${conduwuit-path}
+        systemctl start conduwuit
+      '';
+    }
+  );
+  conduwuit-admin = (
+    pkgs.writeShellApplication {
+      name = "conduwuit-admin";
+      runtimeInputs = [ sources.conduwuit.packages.x86_64-linux.all-features ];
+      text = ''
+        systemctl stop conduwuit
+        export CONDUWUIT_CONFIG=${conduwuit-config};
+        ${sources.conduwuit.packages.x86_64-linux.all-features}/bin/conduwuit --execute "$*" --execute "server shutdown"
+        systemctl start conduwuit
+      '';
+    }
+  );
+in
+{
   imports = [
     # contains your disk format and partitioning configuration.
     ../../modules/disko.nix
@@ -61,8 +76,7 @@ in {
   # You can get your disk id by running the following command on the installer:
   # Replace <IP> with the IP of the installer printed on the screen or by running the `ip addr` command.
   # ssh root@<IP> lsblk --output NAME,ID-LINK,FSTYPE,SIZE,MOUNTPOINT
-  disko.devices.disk.main.device =
-    "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_59606587";
+  disko.devices.disk.main.device = "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_59606587";
 
   # IMPORTANT! Add your SSH key here
   # e.g. > cat ~/.ssh/id_ed25519.pub
@@ -77,36 +91,41 @@ in {
 
   networking.firewall = {
     enable = true;
-    allowedTCPPorts = [ 80 443 8448 ];
+    allowedTCPPorts = [
+      80
+      443
+      8448
+    ];
   };
 
-  environment.systemPackages = [ conduwuit-backup conduwuit-admin ];
+  environment.systemPackages = [
+    conduwuit-backup
+    conduwuit-admin
+  ];
 
-  services.conduwuit = {
-    enable = true;
-    package = conduwuit-package;
-    group = "caddy";
-    settings.global = {
-      server_name = "aiur.huesser.dev";
-      unix_socket_path = conduwuit-socket;
-      well_known = {
-        client = "https://matrix.aiur.huesser.dev";
-        server = "matrix.aiur.huesser.dev:443";
-        support_email = "noah@huesser.dev";
-      };
-      allow_registration = true;
-      registration_token_file =
-        config.clan.core.vars.generators.registration-token.files.registration-token.path;
-      admin_signal_execute = [ "server backup-database" ];
-      database_backup_path = conduwuit-backup-path;
-    };
-  };
-  systemd.services.conduwuit.serviceConfig.StateDirectory =
-    [ conduwuit-backup-path-relative ];
+  # services.conduwuit = {
+  #   enable = true;
+  #   package = conduwuit-package;
+  #   group = "caddy";
+  #   settings.global = {
+  #     server_name = "aiur.huesser.dev";
+  #     unix_socket_path = conduwuit-socket;
+  #     well_known = {
+  #       client = "https://matrix.aiur.huesser.dev";
+  #       server = "matrix.aiur.huesser.dev:443";
+  #       support_email = "noah@huesser.dev";
+  #     };
+  #     allow_registration = true;
+  #     registration_token_file =
+  #       config.clan.core.vars.generators.registration-token.files.registration-token.path;
+  #     admin_signal_execute = [ "server backup-database" ];
+  #     database_backup_path = conduwuit-backup-path;
+  #   };
+  # };
+  systemd.services.conduwuit.serviceConfig.StateDirectory = [ conduwuit-backup-path-relative ];
 
   clan.core.vars.generators.registration-token = {
-    prompts.registration-token.description =
-      "the PSK for regstering a new matrix account";
+    prompts.registration-token.description = "the PSK for regstering a new matrix account";
     prompts.registration-token.type = "hidden";
     prompts.registration-token.persist = true;
     files.registration-token = {
@@ -146,9 +165,7 @@ in {
   };
 
   programs.ssh.knownHosts = {
-    storagebox-ed25519.hostNames =
-      [ "[${names.hetzner-offsite-backup-host}]:23" ];
-    storagebox-ed25519.publicKey =
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIICf9svRenC/PLKIL9nk6K/pxQgoiFC41wTNvoIncOxs";
+    storagebox-ed25519.hostNames = [ "[${names.hetzner-offsite-backup-host}]:23" ];
+    storagebox-ed25519.publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIICf9svRenC/PLKIL9nk6K/pxQgoiFC41wTNvoIncOxs";
   };
 }

@@ -1,10 +1,18 @@
 { self, ... }:
 {
   perSystem =
-    { system, pkgs, ... }:
+    {
+      system,
+      pkgs,
+      config,
+      ...
+    }:
+    let
+      lib = config.flake.lib;
+    in
     {
       apps = {
-        destroy-tf = self.lib.terraform.mkTerraformCommand "destroy-tf" "destroy";
+        destroy-tf = lib.tf.mkTerraformCommand "destroy-tf" "destroy";
       };
     };
 }

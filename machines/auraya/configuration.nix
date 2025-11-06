@@ -30,14 +30,49 @@ let
     };
 in
 {
-  imports = [
-    self.inputs.home-manager.darwinModules.default
-    {
-      home-manager.useUserPackages = true;
-    }
-    self.inputs.nix-homebrew.darwinModules.nix-homebrew
-    config-home-manager
-  ];
+  imports =
+    let
+      lib = self.inputs.nixpkgs.lib;
+      modulesPath = ../../flake/modules/home;
+    in
+    [
+      self.inputs.home-manager.darwinModules.default
+      {
+        home-manager.useUserPackages = true;
+      }
+      self.inputs.nix-homebrew.darwinModules.nix-homebrew
+      self.inputs.home-manager.flakeModules.home-manager
+      config-home-manager
+      {
+        perSystem =
+          { ... }:
+          {
+            options.flake.lib = lib.mkOption {
+              type = lib.types.attrsOf lib.types.anything;
+              default = { };
+              description = ''
+                A collection of functions to be used in this flake.
+              '';
+              example = lib.literalExpression ''
+                {
+                }
+              '';
+            };
+          };
+      }
+    ]
+    ++ (
+      modulesPath
+      |> lib.filesystem.listFilesRecursive
+      |> lib.filter (lib.hasSuffix ".nix")
+      |> lib.filter (
+        path:
+        path
+        |> lib.path.removePrefix modulesPath
+        |> lib.path.subpath.components
+        |> lib.all (component: !(lib.hasPrefix "_" component))
+      )
+    );
 
   # Used for clan to connect to the host when running any of the machine commands.
   clan.core.networking.targetHost = "yatekii@localhost";
