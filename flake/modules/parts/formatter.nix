@@ -2,7 +2,6 @@
 {
   perSystem =
     {
-      system,
       pkgs,
       ...
     }:

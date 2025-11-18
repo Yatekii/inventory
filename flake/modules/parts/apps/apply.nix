@@ -1,7 +1,7 @@
 { ... }:
 {
   perSystem =
-    { system, pkgs, ... }:
+    { pkgs, ... }:
     {
       apps = {
         apply = {
