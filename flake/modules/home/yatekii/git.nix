@@ -1,6 +1,6 @@
 { ... }:
 {
-  flake.modules.programs.git = {
+  programs.git = {
     enable = true;
     userName = "Noah Hüsser";
     userEmail = "noahs@huesser.dev";
@@ -17,6 +17,8 @@
       key = "/Users/yatekii/.ssh/id_ed25519.pub";
       signByDefault = true;
     };
-    push.autoSetupRemote = true;
+    extraConfig = {
+      push.autoSetupRemote = true;
+    };
   };
 }

@@ -1,5 +1,6 @@
-{ self, ... }:
+{ self, lib, ... }:
 let
+  gatherModules = import ../../flake/modules/gatherModules.nix;
   config-home-manager =
     { config, ... }:
     {
@@ -30,49 +31,15 @@ let
     };
 in
 {
-  imports =
-    let
-      lib = self.inputs.nixpkgs.lib;
-      modulesPath = ../../flake/modules/home;
-    in
-    [
-      self.inputs.home-manager.darwinModules.default
-      {
-        home-manager.useUserPackages = true;
-      }
-      self.inputs.nix-homebrew.darwinModules.nix-homebrew
-      self.inputs.home-manager.flakeModules.home-manager
-      config-home-manager
-      {
-        perSystem =
-          { ... }:
-          {
-            options.flake.lib = lib.mkOption {
-              type = lib.types.attrsOf lib.types.anything;
-              default = { };
-              description = ''
-                A collection of functions to be used in this flake.
-              '';
-              example = lib.literalExpression ''
-                {
-                }
-              '';
-            };
-          };
-      }
-    ]
-    ++ (
-      modulesPath
-      |> lib.filesystem.listFilesRecursive
-      |> lib.filter (lib.hasSuffix ".nix")
-      |> lib.filter (
-        path:
-        path
-        |> lib.path.removePrefix modulesPath
-        |> lib.path.subpath.components
-        |> lib.all (component: !(lib.hasPrefix "_" component))
-      )
-    );
+  imports = [
+    self.inputs.home-manager.darwinModules.default
+    {
+      home-manager.useUserPackages = true;
+    }
+    self.inputs.nix-homebrew.darwinModules.nix-homebrew
+    config-home-manager
+    ./yatekii.nix
+  ] ++ gatherModules lib [ ../../flake/modules/overlays ];
 
   # Used for clan to connect to the host when running any of the machine commands.
   clan.core.networking.targetHost = "yatekii@localhost";
@@ -80,6 +47,25 @@ in
   nixpkgs.hostPlatform = "aarch64-darwin";
   system.stateVersion = 6;
   system.primaryUser = "yatekii";
+
+  # User configuration
+  users.users.yatekii = {
+    name = "yatekii";
+    home = "/Users/yatekii";
+  };
+
+  # Home Manager configuration for yatekii
+  home-manager.users.yatekii =
+    { pkgs, ... }:
+    {
+      home.username = "yatekii";
+      home.homeDirectory = "/Users/yatekii";
+      home.stateVersion = "25.05";
+
+      home.packages = [
+        pkgs.htop
+      ];
+    };
 
   # Allow touch ID to be used for sudo password prompts.
   security.pam.services.sudo_local.touchIdAuth = true;

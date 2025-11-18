@@ -4,6 +4,7 @@
     # inputs.clan-core.url =
     #   "git+https://git.clan.lol/Yatekii/clan-core?ref=init-restic";
     # inputs.clan-core.url = "path:///Users/yatekii/repos/clan-core";
+    clan-core.inputs.flake-parts.follows = "flake-parts";
     nixpkgs.follows = "clan-core/nixpkgs";
 
     # We use flake-parts to modularaize our flake
@@ -59,6 +60,8 @@
             };
           };
       };
+      lib = inputs.nixpkgs.lib;
+      gatherModules = import flake/modules/gatherModules.nix;
     in
     flake-parts.lib.mkFlake
       {
@@ -69,7 +72,6 @@
         { self, pkgs, ... }:
         let
           lib = inputs.nixpkgs.lib;
-          modulesPath = ./flake/modules;
         in
         {
           # See: https://flake.parts/getting-started
@@ -86,7 +88,6 @@
               clan-core.flakeModules.default
               inputs.flake-parts.flakeModules.modules
               rust-overlay-module
-              inputs.home-manager.flakeModules.home-manager
               {
                 perSystem =
                   { ... }:
@@ -104,19 +105,7 @@
                     };
                   };
               }
-            ]
-            ++ (
-              modulesPath
-              |> lib.filesystem.listFilesRecursive
-              |> lib.filter (lib.hasSuffix ".nix")
-              |> lib.filter (
-                path:
-                path
-                |> lib.path.removePrefix modulesPath
-                |> lib.path.subpath.components
-                |> lib.all (component: !(lib.hasPrefix "_" component))
-              )
-            );
+            ] ++ (gatherModules lib [ ./flake/modules/lib ./flake/modules/parts ]);
 
           # Define your Clan
           # See: https://docs.clan.lol/reference/nix-api/clan/

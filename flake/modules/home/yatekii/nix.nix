@@ -1,6 +1,6 @@
 { pkgs, ... }:
 {
-  flake.modules.home.packages = [
+  home.packages = [
     pkgs.nixfmt-rfc-style
     pkgs.nil
   ];
