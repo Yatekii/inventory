@@ -3,7 +3,7 @@
   programs.git = {
     enable = true;
     userName = "Noah Hüsser";
-    userEmail = "noahs@huesser.dev";
+    userEmail = "noah@huesser.dev";
     aliases = {
       co = "checkout";
       caa = "commit --amend -a --no-edit";
