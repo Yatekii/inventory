@@ -1,9 +1,13 @@
-{ config, pkgs, names, ... }:
+{
+  config,
+  pkgs,
+  names,
+  ...
+}:
 let
   vaultwarden-domain = "nvaultwarden.huesser.dev";
   vaultwarden-signups-allowed = false;
-  vaultwarden-admin-token =
-    config.clan.core.vars.generators.admin-token.files.admin-token.path;
+  vaultwarden-admin-token = config.clan.core.vars.generators.admin-token.files.admin-token.path;
   vaultwarden-log-file = "${vaultwarden-path}vaultwarden.log";
   vaultwarden-websocket-enabled = true;
   vaultwarden-host = "127.0.0.1";
@@ -14,31 +18,36 @@ let
   vaultwarden-backup-path-relative = "vaultwarden-backup";
   vaultwarden-backup-path = "/var/lib/${vaultwarden-backup-path-relative}";
   vaultwarden-user = "vaultwarden";
-  vaultwarden-backup = (pkgs.writeShellApplication {
-    name = "vaultwarden-backup";
-    runtimeInputs = [ pkgs.sqlite3 ];
-    text = ''
-      set -eu
-      systemctl stop vaultwarden
-      cp ${vaultwarden-path}/attachments ${vaultwarden-backup-path}/attachments
-      sqlite3 ${vaultwarden-path}/db.sqlite3 ".backup '${vaultwarden-backup-path}/db.sqlite3'"
-      systemctl start vaultwarden
-    '';
-  });
-  vaultwarden-restore = (pkgs.writeShellApplication {
-    name = "vaultwarden-restore";
-    runtimeInputs = [ ];
-    text = ''
-      set -eu
-      systemctl stop vaultwarden
-      cp ${vaultwarden-backup-path}/attachments ${vaultwarden-path}/attachments
-      cp ${vaultwarden-backup-path}/db.sqlite3 ${vaultwarden-path}/db.sqlite3
-      rm ${vaultwarden-path}/db.sqlite3-wal
-      sqlite3 ${vaultwarden-path}/db.sqlite3 ".backup '${vaultwarden-backup-path}/db.sqlite3'"
-      systemctl start vaultwarden
-    '';
-  });
-in {
+  vaultwarden-backup = (
+    pkgs.writeShellApplication {
+      name = "vaultwarden-backup";
+      runtimeInputs = [ pkgs.sqlite3 ];
+      text = ''
+        set -eu
+        systemctl stop vaultwarden
+        cp ${vaultwarden-path}/attachments ${vaultwarden-backup-path}/attachments
+        sqlite3 ${vaultwarden-path}/db.sqlite3 ".backup '${vaultwarden-backup-path}/db.sqlite3'"
+        systemctl start vaultwarden
+      '';
+    }
+  );
+  vaultwarden-restore = (
+    pkgs.writeShellApplication {
+      name = "vaultwarden-restore";
+      runtimeInputs = [ ];
+      text = ''
+        set -eu
+        systemctl stop vaultwarden
+        cp ${vaultwarden-backup-path}/attachments ${vaultwarden-path}/attachments
+        cp ${vaultwarden-backup-path}/db.sqlite3 ${vaultwarden-path}/db.sqlite3
+        rm ${vaultwarden-path}/db.sqlite3-wal
+        sqlite3 ${vaultwarden-path}/db.sqlite3 ".backup '${vaultwarden-backup-path}/db.sqlite3'"
+        systemctl start vaultwarden
+      '';
+    }
+  );
+in
+{
   # imports = [ ../modules/caddy.nix ];
 
   # environment.systemPackages = [ vaultwarden-backup vaultwarden-restore ];

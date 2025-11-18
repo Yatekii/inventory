@@ -30,6 +30,8 @@
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "clan-core/nixpkgs";
     };
+
+    treefmt-nix.url = "github:numtide/treefmt-nix";
   };
 
   outputs =
@@ -39,28 +41,11 @@
       nixpkgs,
       clan-core,
       rust-overlay,
-      nix-homebrew,
-      homebrew-cask,
-      homebrew-core,
       ...
     }:
     let
       hetzner-offsite-backup-user = "u415891";
       hetzner-offsite-backup-host = "${hetzner-offsite-backup-user}.your-storagebox.de";
-      rust-overlay-module = {
-        perSystem =
-          { system, ... }:
-          {
-            _module.args.pkgs = import nixpkgs {
-              inherit system;
-              overlays = [
-                (import rust-overlay)
-              ];
-              config = { };
-            };
-          };
-      };
-      lib = inputs.nixpkgs.lib;
       gatherModules = import flake/modules/gatherModules.nix;
     in
     flake-parts.lib.mkFlake
@@ -69,7 +54,7 @@
         inherit self;
       }
       (
-        { self, pkgs, ... }:
+        { ... }:
         let
           lib = inputs.nixpkgs.lib;
         in
@@ -87,7 +72,6 @@
             [
               clan-core.flakeModules.default
               inputs.flake-parts.flakeModules.modules
-              rust-overlay-module
               {
                 perSystem =
                   { ... }:
@@ -105,7 +89,11 @@
                     };
                   };
               }
-            ] ++ (gatherModules lib [ ./flake/modules/lib ./flake/modules/parts ]);
+            ]
+            ++ (gatherModules lib [
+              ./flake/modules/lib
+              ./flake/modules/parts
+            ]);
 
           # Define your Clan
           # See: https://docs.clan.lol/reference/nix-api/clan/

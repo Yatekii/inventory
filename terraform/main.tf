@@ -12,7 +12,7 @@ terraform {
     }
     state {
       enforced = true
-      method = method.aes_gcm.encryption_method
+      method   = method.aes_gcm.encryption_method
     }
   }
 }

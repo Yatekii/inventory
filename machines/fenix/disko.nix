@@ -2,7 +2,8 @@ let
   name = "fenix";
   machine = (builtins.fromJSON (builtins.readFile ./../machines.json)).${name};
   disk-id = machine.disk_id;
-in {
+in
+{
 
   boot.loader.grub.efiSupport = true;
   boot.loader.grub.efiInstallAsRemovable = true;

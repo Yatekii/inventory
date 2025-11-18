@@ -3,8 +3,12 @@ let
   name = "fenix";
   machine = (builtins.fromJSON (builtins.readFile ./../machines.json)).${name};
   ip = machine.ipv4;
-in {
-  imports = [ ../../modules/shared.nix ../../modules/vaultwarden.nix ];
+in
+{
+  imports = [
+    ../../modules/shared.nix
+    ../../modules/vaultwarden.nix
+  ];
 
   # Set this for clan commands use ssh i.e. `clan machines update`
   # If you change the hostname, you need to update this line to root@<new-hostname>
@@ -23,9 +27,7 @@ in {
   clan.core.networking.zerotier.controller.enable = false;
 
   programs.ssh.knownHosts = {
-    storagebox-ed25519.hostNames =
-      [ "[${names.hetzner-offsite-backup-host}]:23" ];
-    storagebox-ed25519.publicKey =
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIICf9svRenC/PLKIL9nk6K/pxQgoiFC41wTNvoIncOxs";
+    storagebox-ed25519.hostNames = [ "[${names.hetzner-offsite-backup-host}]:23" ];
+    storagebox-ed25519.publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIICf9svRenC/PLKIL9nk6K/pxQgoiFC41wTNvoIncOxs";
   };
 }

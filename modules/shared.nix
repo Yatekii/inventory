@@ -1,4 +1,5 @@
-{ config, clan-core, ... }: {
+{ config, clan-core, ... }:
+{
   imports = [
     # Enables the OpenSSH server for remote access
     clan-core.clanModules.sshd
@@ -20,10 +21,14 @@
   users.users.user = {
     name = "yatekii";
     isNormalUser = true;
-    extraGroups = [ "wheel" "networkmanager" "video" "input" ];
+    extraGroups = [
+      "wheel"
+      "networkmanager"
+      "video"
+      "input"
+    ];
     uid = 1000;
-    openssh.authorizedKeys.keys =
-      config.users.users.root.openssh.authorizedKeys.keys;
+    openssh.authorizedKeys.keys = config.users.users.root.openssh.authorizedKeys.keys;
   };
 
   # domainNames = { matrix = "aiur.chat"; };
