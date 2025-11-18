@@ -35,6 +35,7 @@ in
     self.inputs.home-manager.darwinModules.default
     {
       home-manager.useUserPackages = true;
+      home-manager.useGlobalPkgs = false;
     }
     self.inputs.nix-homebrew.darwinModules.nix-homebrew
     config-home-manager
@@ -76,7 +77,7 @@ in
   homebrew.enable = true;
 
   # TODO: How can we move this to a module?
-  # We use homebrews because the nixpkg is not available on darwin.
+  # We use homebrew because the nixpkg is not available on darwin.
   homebrew.casks = [
     "vlc"
   ];
