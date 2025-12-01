@@ -1,6 +1,7 @@
 { pkgs, ... }:
 {
   programs.zed-editor = {
+    package = pkgs.zed-editor;
     enable = true;
     extensions = [
       "html"
