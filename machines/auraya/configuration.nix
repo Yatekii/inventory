@@ -13,7 +13,8 @@ in
     self.inputs.nix-homebrew.darwinModules.nix-homebrew
     ./homebrew.nix
     ./yatekii.nix
-  ] ++ gatherModules lib [ ../../flake/modules/overlays ];
+  ]
+  ++ gatherModules lib [ ../../flake/modules/overlays ];
 
   # Used for clan to connect to the host when running any of the machine commands.
   clan.core.networking.targetHost = "yatekii@localhost";
