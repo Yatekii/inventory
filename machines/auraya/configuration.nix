@@ -8,6 +8,7 @@ in
     {
       home-manager.useUserPackages = true;
       home-manager.useGlobalPkgs = false;
+      home-manager.verbose = true;
     }
     self.inputs.nix-homebrew.darwinModules.nix-homebrew
     ./homebrew.nix
