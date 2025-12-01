@@ -11,5 +11,6 @@ in
     pkgs.fzf
     pkgs.ripgrep
     pkgs.direnv
+    pkgs.rectangle
   ];
 }
