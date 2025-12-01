@@ -8,7 +8,9 @@
   home-manager.users.yatekii =
     { pkgs, ... }:
     {
-      imports = [ ../../flake/modules/home/yatekii.nix ];
+      imports = [
+        ../../flake/modules/home/yatekii.nix
+      ];
       home.packages = [
         pkgs.atool
         pkgs.httpie
