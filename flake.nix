@@ -5,14 +5,16 @@
     #   "git+https://git.clan.lol/Yatekii/clan-core?ref=init-restic";
     # inputs.clan-core.url = "path:///Users/yatekii/repos/clan-core";
     clan-core.inputs.flake-parts.follows = "flake-parts";
-    nixpkgs.follows = "clan-core/nixpkgs";
+
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nix-darwin.inputs.nixpkgs.follows = "nixpkgs";
 
     # We use flake-parts to modularaize our flake
     flake-parts.url = "github:hercules-ci/flake-parts";
     flake-parts.inputs.nixpkgs-lib.follows = "nixpkgs";
 
     home-manager.url = "github:nix-community/home-manager";
-    home-manager.inputs.nixpkgs.follows = "clan-core/nixpkgs";
+    home-manager.inputs.nixpkgs.follows = "nixpkgs";
 
     nix-homebrew.url = "github:zhaofengli/nix-homebrew";
 
@@ -28,10 +30,15 @@
 
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
-      inputs.nixpkgs.follows = "clan-core/nixpkgs";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
 
     treefmt-nix.url = "github:numtide/treefmt-nix";
+
+    # mac-app-util = {
+    #   url = "github:hraban/mac-app-util";
+    #   inputs.nixpkgs.follows = "nixpkgs";
+    # };
   };
 
   outputs =
@@ -68,32 +75,31 @@
           ];
 
           # Import the Clan flake-parts module
-          imports =
-            [
-              clan-core.flakeModules.default
-              inputs.flake-parts.flakeModules.modules
-              {
-                perSystem =
-                  { ... }:
-                  {
-                    options.flake.lib = lib.mkOption {
-                      type = lib.types.attrsOf lib.types.anything;
-                      default = { };
-                      description = ''
-                        A collection of functions to be used in this flake.
-                      '';
-                      example = lib.literalExpression ''
-                        {
-                        }
-                      '';
-                    };
+          imports = [
+            clan-core.flakeModules.default
+            inputs.flake-parts.flakeModules.modules
+            {
+              perSystem =
+                { ... }:
+                {
+                  options.flake.lib = lib.mkOption {
+                    type = lib.types.attrsOf lib.types.anything;
+                    default = { };
+                    description = ''
+                      A collection of functions to be used in this flake.
+                    '';
+                    example = lib.literalExpression ''
+                      {
+                      }
+                    '';
                   };
-              }
-            ]
-            ++ (gatherModules lib [
-              ./flake/modules/lib
-              ./flake/modules/parts
-            ]);
+                };
+            }
+          ]
+          ++ (gatherModules lib [
+            ./flake/modules/lib
+            ./flake/modules/parts
+          ]);
 
           # Define your Clan
           # See: https://docs.clan.lol/reference/nix-api/clan/
