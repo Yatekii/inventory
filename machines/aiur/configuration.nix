@@ -2,12 +2,10 @@
   config,
   pkgs,
   lib,
-  sources,
   names,
   ...
 }:
 let
-  conduwuit-package = sources.conduwuit.packages.x86_64-linux.all-features;
   conduwuit-socket = "/run/conduwuit/conduwuit.sock";
   conduwuit-path = "/var/lib/conduwuit";
   conduwuit-backup-path-relative = "conduwuit-backup";
@@ -17,17 +15,17 @@ let
   conduwuit-config =
     (pkgs.formats.toml { }).generate "conduwuit.toml"
       (config.services.conduwuit).settings;
-  conduwuit-backup = (
-    pkgs.writeShellApplication {
-      name = "conduwuit-backup";
-      runtimeInputs = [ ];
-      text = ''
-        set -eu
-        PID=$(systemctl show --property MainPID --value conduwuit)
-        kill -s SIGUSR2 "$PID"
-      '';
-    }
-  );
+  # conduwuit-backup = (
+  #   pkgs.writeShellApplication {
+  #     name = "conduwuit-backup";
+  #     runtimeInputs = [ ];
+  #     text = ''
+  #       set -eu
+  #       PID=$(systemctl show --property MainPID --value conduwuit)
+  #       kill -s SIGUSR2 "$PID"
+  #     '';
+  #   }
+  # );
   conduwuit-restore = (
     pkgs.writeShellApplication {
       name = "conduwuit-restore";
@@ -45,38 +43,20 @@ let
       '';
     }
   );
-  conduwuit-admin = (
-    pkgs.writeShellApplication {
-      name = "conduwuit-admin";
-      runtimeInputs = [ sources.conduwuit.packages.x86_64-linux.all-features ];
-      text = ''
-        systemctl stop conduwuit
-        export CONDUWUIT_CONFIG=${conduwuit-config};
-        ${sources.conduwuit.packages.x86_64-linux.all-features}/bin/conduwuit --execute "$*" --execute "server shutdown"
-        systemctl start conduwuit
-      '';
-    }
-  );
 in
 {
   imports = [
-    # contains your disk format and partitioning configuration.
-    ../../modules/disko.nix
-    # this file is shared among all machines
-    ../../modules/shared.nix
-    ../../modules/caddy.nix
+    ./disko.nix
+    ../../modules/clan/shared.nix
+    ../../modules/clan/caddy.nix
+    ../../modules/clan/mealie.nix
   ];
 
   # Set this for clan commands use ssh i.e. `clan machines update`
   # If you change the hostname, you need to update this line to root@<new-hostname>
   # This only works however if you have avahi running on your admin machine else use IP
   clan.core.networking.targetHost = "root@142.132.172.209";
-  clan.core.networking.buildHost = "root@142.132.172.209";
-
-  # You can get your disk id by running the following command on the installer:
-  # Replace <IP> with the IP of the installer printed on the screen or by running the `ip addr` command.
-  # ssh root@<IP> lsblk --output NAME,ID-LINK,FSTYPE,SIZE,MOUNTPOINT
-  disko.devices.disk.main.device = "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_59606587";
+  # clan.core.networking.buildHost = "root@142.132.172.209";
 
   # IMPORTANT! Add your SSH key here
   # e.g. > cat ~/.ssh/id_ed25519.pub
@@ -99,8 +79,7 @@ in
   };
 
   environment.systemPackages = [
-    conduwuit-backup
-    conduwuit-admin
+    # conduwuit-backup
   ];
 
   # services.conduwuit = {
@@ -124,15 +103,15 @@ in
   # };
   systemd.services.conduwuit.serviceConfig.StateDirectory = [ conduwuit-backup-path-relative ];
 
-  clan.core.vars.generators.registration-token = {
-    prompts.registration-token.description = "the PSK for regstering a new matrix account";
-    prompts.registration-token.type = "hidden";
-    prompts.registration-token.persist = true;
-    files.registration-token = {
-      secret = true;
-      owner = conduwuit-user;
-    };
-  };
+  # clan.core.vars.generators.registration-token = {
+  #   prompts.registration-token.description = "the PSK for regstering a new matrix account";
+  #   prompts.registration-token.type = "hidden";
+  #   prompts.registration-token.persist = true;
+  #   files.registration-token = {
+  #     secret = true;
+  #     owner = conduwuit-user;
+  #   };
+  # };
 
   services.caddy.virtualHosts."aiur.huesser.dev".extraConfig = ''
     reverse_proxy /.well-known/matrix/* unix/${conduwuit-socket}
@@ -148,21 +127,21 @@ in
     reverse_proxy /_conduwuit/* unix/${conduwuit-socket}
   '';
 
-  systemd.services."conduwuit-backup" = {
-    serviceConfig = {
-      Type = "oneshot";
-      User = conduwuit-user;
-      ExecStart = "${conduwuit-backup}/bin/conduwuit-backup";
-    };
-    wantedBy = [ "timers.target" ];
-    startAt = "04:00";
-  };
+  # systemd.services."conduwuit-backup" = {
+  #   serviceConfig = {
+  #     Type = "oneshot";
+  #     User = conduwuit-user;
+  #     ExecStart = "${conduwuit-backup}/bin/conduwuit-backup";
+  #   };
+  #   wantedBy = [ "timers.target" ];
+  #   startAt = "04:00";
+  # };
 
-  clan.core.state.conduwuit = {
-    folders = [ conduwuit-backup-path ];
-    preBackupScript = "${conduwuit-backup}/bin/conduwuit-backup";
-    postRestoreScript = "${conduwuit-backup}/bin/conduwuit-restore";
-  };
+  # clan.core.state.conduwuit = {
+  #   folders = [ conduwuit-backup-path ];
+  #   preBackupScript = "${conduwuit-backup}/bin/conduwuit-backup";
+  #   postRestoreScript = "${conduwuit-backup}/bin/conduwuit-restore";
+  # };
 
   programs.ssh.knownHosts = {
     storagebox-ed25519.hostNames = [ "[${names.hetzner-offsite-backup-host}]:23" ];

@@ -15,20 +15,29 @@ let
 in
 {
   perSystem =
-    { pkgs, ... }:
+    {
+      pkgs,
+      config,
+      inputs',
+      ...
+    }:
     {
       flake.lib.tf.tofu =
         let
           tofu = pkgs.opentofu.withPlugins (p: [
-            p.external
-            p.local
-            p.hetznerdns
-            p.null
-            p.tls
-            p.hcloud
+            p.hashicorp_external
+            p.hashicorp_local
+            p.timohirt_hetznerdns
+            p.hashicorp_null
+            p.hashicorp_tls
+            p.hetznercloud_hcloud
           ]);
+          clan-cli = inputs'.clan-core.packages.clan-cli;
+          getCloudToken = config.flake.lib.tf.getCloudToken;
+          getSshKey = config.flake.lib.tf.getSshKey;
         in
         pkgs.writeShellScriptBin "tofu" ''
+          export PATH="${clan-cli}/bin:${getCloudToken}/bin:${getSshKey}/bin:${pkgs.jq}/bin:$PATH"
           ${terraformStateEncryption}
           exec ${tofu}/bin/tofu -chdir=terraform $@
         '';

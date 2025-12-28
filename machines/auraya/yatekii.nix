@@ -1,15 +1,16 @@
-{ self, ... }:
+{ self, pkgs, ... }:
 {
   users.users.yatekii = {
     name = "yatekii";
     home = "/Users/yatekii";
   };
+
   home-manager.extraSpecialArgs = { inherit self; };
   home-manager.users.yatekii =
     { pkgs, ... }:
     {
       imports = [
-        ../../flake/modules/home/yatekii.nix
+        ../../modules/home/user/yatekii.nix
       ];
       home.packages = [
         pkgs.atool

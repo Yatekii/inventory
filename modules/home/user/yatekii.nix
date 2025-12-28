@@ -1,6 +1,6 @@
 { lib, pkgs, ... }:
 let
-  gatherModules = import ../../modules/gatherModules.nix;
+  gatherModules = import ../../flake/_gatherModules.nix;
 in
 {
   imports = gatherModules lib [ ./yatekii ];

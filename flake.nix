@@ -53,7 +53,7 @@
     let
       hetzner-offsite-backup-user = "u415891";
       hetzner-offsite-backup-host = "${hetzner-offsite-backup-user}.your-storagebox.de";
-      gatherModules = import flake/modules/gatherModules.nix;
+      gatherModules = import modules/flake/_gatherModules.nix;
     in
     flake-parts.lib.mkFlake
       {
@@ -97,8 +97,8 @@
             }
           ]
           ++ (gatherModules lib [
-            ./flake/modules/lib
-            ./flake/modules/parts
+            ./modules/flake/lib
+            ./modules/flake/parts
           ]);
 
           # Define your Clan
@@ -109,6 +109,90 @@
 
             inventory = {
               machines.auraya.machineClass = "darwin";
+
+              # clanServices (replaces clanModules)
+              instances = {
+                # SSH service for all NixOS machines
+                sshd = {
+                  module = {
+                    name = "sshd";
+                    input = "clan-core";
+                  };
+                  roles.server.machines = {
+                    aiur = { };
+                    fenix = { };
+                  };
+                };
+
+                # Root user (replaces root-password clanModule)
+                user-root = {
+                  module = {
+                    name = "users";
+                    input = "clan-core";
+                  };
+                  roles.default.machines = {
+                    aiur = { };
+                    fenix = { };
+                  };
+                  roles.default.settings = {
+                    user = "root";
+                  };
+                };
+
+                # yatekii user (replaces user-password clanModule)
+                user-yatekii = {
+                  module = {
+                    name = "users";
+                    input = "clan-core";
+                  };
+                  roles.default.machines = {
+                    aiur = { };
+                    fenix = { };
+                  };
+                  roles.default.settings = {
+                    user = "yatekii";
+                    groups = [
+                      "wheel"
+                      "networkmanager"
+                      "video"
+                      "input"
+                    ];
+                  };
+                };
+
+                # Trusted nix caches
+                trusted-nix-caches = {
+                  module = {
+                    name = "trusted-nix-caches";
+                    input = "clan-core";
+                  };
+                  roles.default.machines = {
+                    aiur = { };
+                    fenix = { };
+                  };
+                };
+
+                syncthing-auraya = {
+                  module = {
+                    name = "syncthing";
+                    input = "clan-core";
+                  };
+                  roles.peer.machines."auraya".settings = {
+                    extraDevices = {
+                      saru = {
+                        addresses = [ "dynamic" ];
+                        id = "QS4PRFF-K7CAIQ2-HZR52QV-7B3VAFZ-DZSY6PO-XLBATVF-ZV6TGVO-RZBDYQW";
+                      };
+                    };
+                    folders = {
+                      documents = {
+                        path = "/Users/yatekii/Documents";
+                        devices = [ "saru" ];
+                      };
+                    };
+                  };
+                };
+              };
             };
 
             specialArgs = {

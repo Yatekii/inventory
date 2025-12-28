@@ -6,8 +6,10 @@ let
 in
 {
   imports = [
-    ../../modules/shared.nix
-    ../../modules/vaultwarden.nix
+    ./disko.nix
+    ../../modules/clan/shared.nix
+    ../../modules/clan/vaultwarden.nix
+    ../../modules/clan/mealie.nix
   ];
 
   # Set this for clan commands use ssh i.e. `clan machines update`

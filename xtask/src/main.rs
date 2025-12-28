@@ -122,7 +122,28 @@ fn gather_disk_ids(root: PathBuf, machines_json: PathBuf) -> Result<()> {
         let ip = &machine.ipv4;
         let host = format!("root@{ip}");
         println!("grabbing diskId for {host}");
-        let disk_id_output = cmd!(sh, "ssh root@{ip} lsblk --output NAME,ID-LINK").read()?;
+
+        // Retry SSH connection up to 30 times with 2 second delay (60s total)
+        let mut disk_id_output = String::new();
+        for attempt in 1..=30 {
+            let result = cmd!(
+                sh,
+                "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=5 root@{ip} lsblk --output NAME,ID-LINK"
+            )
+            .read();
+
+            match result {
+                std::result::Result::Ok(output) => {
+                    disk_id_output = output;
+                    break;
+                }
+                std::result::Result::Err(_) if attempt < 30 => {
+                    println!("  SSH not ready, retrying in 2s... (attempt {attempt}/30)");
+                    std::thread::sleep(std::time::Duration::from_secs(2));
+                }
+                std::result::Result::Err(e) => return Err(e.into()),
+            }
+        }
         for line in disk_id_output.lines() {
             if line.starts_with("sda") {
                 machine.disk_id = line.split_ascii_whitespace().nth(1).unwrap().to_string();

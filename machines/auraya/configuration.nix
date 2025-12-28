@@ -1,6 +1,6 @@
 { self, lib, ... }:
 let
-  gatherModules = import ../../flake/modules/gatherModules.nix;
+  gatherModules = import ../../modules/flake/_gatherModules.nix;
 in
 {
   imports = [
@@ -14,7 +14,7 @@ in
     ./homebrew.nix
     ./yatekii.nix
   ]
-  ++ gatherModules lib [ ../../flake/modules/overlays ];
+  ++ gatherModules lib [ ../../modules/flake/overlays ];
 
   # Used for clan to connect to the host when running any of the machine commands.
   clan.core.networking.targetHost = "yatekii@localhost";

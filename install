@@ -2,3 +2,7 @@
 
 echo "Installing nix ..."
 sh <(curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install)
+
+echo "Provisioning user host ..."
+export NIX_CONFIG="extra-experimental-features = nix-command flakes pipe-operators"
+sudo nix run nix-darwin/master#darwin-rebuild -- switch --show-trace --flake .#auraya
