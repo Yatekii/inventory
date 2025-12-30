@@ -14,9 +14,10 @@ nix develop                     # Enter dev shell with clan-cli, tofu, xtask, gi
 nix fmt                         # Format all files (nixfmt + terraform via treefmt)
 
 # Machine configuration
-nix run .#apply -- auraya       # Apply config to auraya (darwin-rebuild switch)
-nix run .#apply -- aiur         # Apply config to aiur (NixOS rebuild)
-nix run .#apply -- fenix        # Apply config to fenix (NixOS rebuild)
+# IMPORTANT: For NixOS machines (aiur, fenix), ALWAYS use `clan machines update`, NOT `nix run .#apply`!
+nix run .#apply -- auraya       # Apply config to auraya (darwin-rebuild switch) - macOS only
+clan machines update aiur       # Deploy to aiur (NixOS) - ALWAYS use this for NixOS!
+clan machines update fenix      # Deploy to fenix (NixOS) - ALWAYS use this for NixOS!
 ./install                       # Bootstrap script for new hosts
 
 # Infrastructure (Terraform/OpenTofu) - always use nix run, not vanilla tofu commands
@@ -81,3 +82,42 @@ xtask clean-terraform-files <terraform-dir>
 - `nix-homebrew` - Declarative Homebrew on macOS
 - `opentofu` - Infrastructure provisioning
 - `treefmt-nix` - Multi-language formatting
+
+## Kanidm (Identity Provider)
+
+Kanidm is configured in `modules/clan/kanidm.nix` with users defined in `modules/clan/individuals.nix`.
+
+### Important Conventions
+
+- **Group names must use underscores, not periods** (e.g., `stalwart_users` not `stalwart.users`). Periods conflict with Kanidm's SPN format which uses periods for domain components.
+- **autoRemove is enabled** - The `kanidm-provision` tool automatically deletes groups/users removed from config.
+- **Password detection** - The password-setting service queries Kanidm directly (`kanidm person credential status`) to check if a user has credentials, rather than using marker files.
+- **Database reset** - If provisioning fails with 403 on `ext_idm_provisioned_entities`, delete the database (`rm /var/lib/kanidm/kanidm.db*`) and restart the service.
+
+### Built-in Groups and idm_admin
+
+**Critical**: The `idm_admin` account must remain a member of `idm_admins` for provisioning to work. The NixOS kanidm module uses `idm_admin` to run `kanidm-provision`.
+
+- On a fresh Kanidm database, `idm_admin` is automatically a member of `idm_admins`
+- If you provision the `idm_admins` group with `overwriteMembers = true` (default), it will **replace** all members, removing `idm_admin` and breaking future provisioning runs
+- **Solution**: For built-in groups like `idm_admins`, set `overwriteMembers = false` to append your users instead of replacing. This is implemented in `builtinGroupMembers` in `kanidm.nix`.
+
+### Troubleshooting
+
+If provisioning fails with "accessdenied" when creating groups:
+
+1. The `idm_admin` account was likely removed from `idm_admins`
+2. Fix: Delete the database and restart: `systemctl stop kanidm && rm -f /var/lib/kanidm/kanidm.db* && systemctl start kanidm`
+3. The fresh database will have `idm_admin` in `idm_admins`, and provisioning will work
+
+To fully reset and reprovision Kanidm:
+
+```bash
+# 1. Clear the database and cached tokens
+ssh root@fenix "systemctl stop kanidm && rm -f /var/lib/kanidm/kanidm.db* && rm -f ~/.cache/kanidm_tokens"
+
+# 2. Reprovision using clan (ALWAYS use this to verify provisioning works)
+nix develop -c clan machines update fenix
+```
+
+**Important**: Always use `clan machines update` to test provisioning, not just `systemctl start`. This ensures the full NixOS activation runs, including the kanidm post-start provisioning script.

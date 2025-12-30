@@ -48,11 +48,14 @@ in
   # Do not show the special/accented characters prompt on press and hold of characters.
   system.defaults.NSGlobalDomain.ApplePressAndHoldEnabled = false;
 
+  system.defaults.NSGlobalDomain."com.apple.trackpad.forceClick" = false;
+
   homebrew.enable = true;
 
   # TODO: How can we move this to a module?
   # We use homebrew because the nixpkg is not available on darwin.
   homebrew.casks = [
     "vlc"
+    "caffeine"
   ];
 }

@@ -50,6 +50,7 @@ in
     ../../modules/clan/shared.nix
     ../../modules/clan/caddy.nix
     ../../modules/clan/mealie.nix
+    ../../modules/clan/ssh-keys.nix
   ];
 
   # Set this for clan commands use ssh i.e. `clan machines update`
@@ -57,13 +58,6 @@ in
   # This only works however if you have avahi running on your admin machine else use IP
   clan.core.networking.targetHost = "root@142.132.172.209";
   # clan.core.networking.buildHost = "root@142.132.172.209";
-
-  # IMPORTANT! Add your SSH key here
-  # e.g. > cat ~/.ssh/id_ed25519.pub
-  users.users.root.openssh.authorizedKeys.keys = [
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH/zWoCMabsPjao7AZKfA1jvokjbOBxyGHHKOwTA9krw auraya"
-    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJQC2K0wDAi6HBOn0kXGBGRw4zjdGivMCSF84P/w7y2f arcturo"
-  ];
 
   # Zerotier needs one controller to accept new nodes. Once accepted
   # the controller can be offline and routing still works.
