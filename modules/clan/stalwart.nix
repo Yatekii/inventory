@@ -148,6 +148,18 @@ in
         ansi = false;
       };
 
+      # Tracer log file for telemetry (required for web UI telemetry)
+      tracer.log = {
+        type = "log";
+        level = "info";
+        path = "/var/lib/stalwart-mail/logs";
+        prefix = "stalwart.log";
+        enable = true;
+      };
+
+      # Enable metrics for Web UI dashboard
+      metrics.prometheus.enable = true;
+
       # DKIM signatures - one per domain
       signature = lib.listToAttrs (
         map (d: {
