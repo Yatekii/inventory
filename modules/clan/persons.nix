@@ -4,7 +4,10 @@
   persons = {
     noah = {
       displayName = "Noah Hüsser";
-      mailAddresses = [ "noah@huesser.dev" ];
+      mailAddresses = [
+        "noah@huesser.dev"
+        "noah@jarty.ch"
+      ];
       admin = true;
     };
   };
