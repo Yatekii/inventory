@@ -98,7 +98,7 @@ in
       # Values are Stalwart expressions - strings must be single-quoted
       session.auth = {
         mechanisms = "[plain, login]";
-        directory = "'memory'";
+        directory = "'in-memory'";
       };
 
       # Storage configuration using RocksDB
@@ -113,27 +113,26 @@ in
         fts = "db";
         blob = "db";
         lookup = "db";
-        directory = "memory";
+        directory = "in-memory";
       };
 
       # Resolver for outbound mail
       resolver.type = "system";
 
-      # In-memory directory for declarative user/group management
-      directory.memory = {
+      # In-memory directory with declarative principals
+      # This is completely separate from the "internal" directory that NixOS module creates
+      directory."in-memory" = {
         type = "memory";
+        principals = lib.mapAttrsToList (userName: userDef: {
+          name = userName;
+          class = if userDef.admin or false then "admin" else "individual";
+          description = userDef.displayName;
+          secret = "%{file:${
+            config.clan.core.vars.generators."stalwart-user-${userName}-password".files.password.path
+          }}%";
+          email = userDef.mailAddresses;
+        }) persons;
       };
-
-      # Declarative user principals from persons.nix
-      "directory.memory.principals" = lib.mapAttrsToList (userName: userDef: {
-        name = userName;
-        class = if userDef.admin or false then "admin" else "individual";
-        description = userDef.displayName;
-        secret = "%{file:${
-          config.clan.core.vars.generators."stalwart-user-${userName}-password".files.password.path
-        }}%";
-        email = userDef.mailAddresses;
-      }) persons;
 
       # Fallback admin for emergency access
       authentication.fallback-admin = {
