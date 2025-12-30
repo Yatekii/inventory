@@ -28,17 +28,17 @@ let
   ) groups;
 
   # Build membership for built-in groups
-  # IMPORTANT: idm_admin must remain in idm_admins for provisioning to work
+  # IMPORTANT: For idm_admins, we use overwriteMembers = false to preserve
+  # the built-in idm_admin membership (required for provisioning to work)
   builtinGroupMembers = lib.listToAttrs (
     map (groupName: {
       name = groupName;
       value = {
-        members =
-          # Always include idm_admin in idm_admins so provisioning keeps working
-          (lib.optional (groupName == "idm_admins") "idm_admin")
-          ++ lib.attrNames (
-            lib.filterAttrs (userName: userDef: lib.elem groupName (userDef.groups or [ ])) persons
-          );
+        members = lib.attrNames (
+          lib.filterAttrs (userName: userDef: lib.elem groupName (userDef.groups or [ ])) persons
+        );
+        # Don't overwrite idm_admins - preserve built-in idm_admin member
+        overwriteMembers = groupName != "idm_admins";
       };
     }) builtinGroups
   );
