@@ -51,6 +51,17 @@ Set up DNS A record for `auth.huesser.dev` pointing to fenix's IP (see machines/
 
 Request port 25 unblock from Hetzner support for fenix to enable outbound email delivery.
 
+### Stalwart Web UI Limitations
+
+The Stalwart Web UI has two known issues:
+
+1. **In-memory directory not reflected in Web UI:** When using a memory-type directory for declarative user management, the API/Web UI doesn't expose full principal data (emails, descriptions). The dashboard shows 0 users/domains even though authentication and mail delivery work correctly. To fix this, either:
+   - Switch to internal directory with API sync (loses declarative config)
+   - Wait for Stalwart to add better in-memory directory API support
+   - Consider Stalwart Enterprise
+
+2. **Live Telemetry is Enterprise-only:** The "Not found" errors on dashboard pages (Overview, Delivery, etc.) are because Live Tracing/Telemetry endpoints are only available in Stalwart Enterprise Edition.
+
 ### DNS Records for Email
 
 Set up DNS records for `huesser.dev` and `jarty.ch`:

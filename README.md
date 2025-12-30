@@ -157,3 +157,9 @@ Stalwart exposes OIDC endpoints at `auth.huesser.dev` for use by other services:
 - **Web Interface:** https://mail.huesser.dev
 - **IMAP:** mail.huesser.dev:993 (TLS)
 - **SMTP Submission:** mail.huesser.dev:465 (TLS) or :587 (STARTTLS)
+
+### Known Limitations
+
+- **Web UI Dashboard:** The dashboard shows 0 users/domains because Stalwart's API doesn't expose full principal data from in-memory directories. Authentication and mail delivery still work correctly.
+- **Live Telemetry:** The "Not found" errors on dashboard pages are because Live Tracing/Telemetry is an Enterprise-only feature in Stalwart Community Edition.
+- **Outbound Port 25:** Hetzner blocks outbound port 25 by default. A support request must be submitted to unblock it for sending mail to external servers.
