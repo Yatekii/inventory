@@ -146,6 +146,7 @@ in
         type = "stdout";
         level = "info";
         ansi = false;
+        enable = true;
       };
 
       # Tracer log file for telemetry (required for web UI telemetry)
