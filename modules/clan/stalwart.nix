@@ -1,14 +1,25 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 let
   domainsConfig = import ./domains.nix;
+  personsConfig = import ./persons.nix;
   inherit (domainsConfig) domains primaryDomain;
+  inherit (personsConfig) persons;
   mailHostname = "mail.${primaryDomain}";
   authDomain = "auth.${primaryDomain}";
-  acmeDir = config.security.acme.certs.${mailHostname}.directory;
+
+  # Certificate directories for each mail domain
+  certDir = domain: config.security.acme.certs."mail.${domain}".directory;
+
+  # DKIM selector (used in DNS record name: <selector>._domainkey.<domain>)
+  dkimSelector = "default";
+
+  # Helper to get DKIM key path for a domain
+  dkimKeyPath = domain: config.clan.core.vars.generators."dkim-${domain}".files.private.path;
 in
 {
   # Stalwart Mail Server
@@ -20,6 +31,11 @@ in
     settings = {
       # Server identification
       server.hostname = mailHostname;
+
+      # HTTP settings for reverse proxy
+      # http.url is an expression - use single-quoted string for static URL
+      http.url = "'https://${mailHostname}'";
+      http.use-x-forwarded = true;
 
       # Listeners
       server.listener = {
@@ -33,6 +49,7 @@ in
         submission = {
           bind = [ "[::]:587" ];
           protocol = "smtp";
+          tls.required = true;
         };
 
         # Submissions (implicit TLS)
@@ -42,10 +59,11 @@ in
           tls.implicit = true;
         };
 
-        # IMAP for mail clients
+        # IMAP for mail clients (STARTTLS)
         imap = {
           bind = [ "[::]:143" ];
           protocol = "imap";
+          tls.required = true;
         };
 
         # IMAPS (implicit TLS)
@@ -62,20 +80,25 @@ in
         };
       };
 
-      # TLS certificates
-      certificate.default = {
-        cert = "%{file:${acmeDir}/fullchain.pem}%";
-        private-key = "%{file:${acmeDir}/key.pem}%";
-      };
+      # TLS certificates - one per domain using security.acme certs
+      # Stalwart auto-parses certificate subjects and uses SNI to select the right cert
+      certificate = lib.listToAttrs (
+        map (d: {
+          name = d.name;
+          value = {
+            cert = "%{file:${certDir d.name}/fullchain.pem}%";
+            private-key = "%{file:${certDir d.name}/key.pem}%";
+            # Primary domain cert is the default fallback
+            default = d.primary;
+          };
+        }) domains
+      );
 
-      # Session authentication - use OIDC via Kanidm
+      # Session authentication using in-memory directory
+      # Values are Stalwart expressions - strings must be single-quoted
       session.auth = {
-        mechanisms = [
-          "PLAIN"
-          "LOGIN"
-          "OAUTHBEARER"
-        ];
-        directory = "kanidm";
+        mechanisms = "[plain, login]";
+        directory = "'memory'";
       };
 
       # Storage configuration using RocksDB
@@ -90,54 +113,33 @@ in
         fts = "db";
         blob = "db";
         lookup = "db";
-        directory = "kanidm";
+        directory = "memory";
       };
 
-      # Kanidm OIDC directory for user authentication
-      # Stalwart queries the userinfo endpoint to validate OAUTHBEARER tokens
-      # Note: Users must log in once via OIDC before receiving mail
-      directory.kanidm = {
-        type = "oidc";
-        timeout = "15s";
+      # Resolver for outbound mail
+      resolver.type = "system";
 
-        # Kanidm userinfo endpoint
-        endpoint = {
-          url = "https://${authDomain}/oauth2/openid/stalwart/userinfo";
-          method = "userinfo";
-        };
-
-        # Field mappings from OIDC claims
-        fields = {
-          email = "email";
-          username = "preferred_username";
-          full-name = "name";
-        };
+      # In-memory directory for declarative user/group management
+      directory.memory = {
+        type = "memory";
       };
 
-      # Internal directory as fallback for local accounts
-      directory.internal = {
-        type = "internal";
-        store = "db";
+      # Declarative user principals from persons.nix
+      "directory.memory.principals" = lib.mapAttrsToList (userName: userDef: {
+        name = userName;
+        class = if userDef.admin or false then "admin" else "individual";
+        description = userDef.displayName;
+        secret = "%{file:${
+          config.clan.core.vars.generators."stalwart-user-${userName}-password".files.password.path
+        }}%";
+        email = userDef.mailAddresses;
+      }) persons;
+
+      # Fallback admin for emergency access
+      authentication.fallback-admin = {
+        user = "admin";
+        secret = "%{file:${config.clan.core.vars.generators.stalwart-admin-password.files.password.path}}%";
       };
-
-      # Queue routing strategy (v0.13+ replaces next-hop)
-      queue.strategy.route =
-        (map (d: {
-          "if" = "rcpt_domain";
-          "eq" = d.name;
-          "then" = "local";
-        }) domains)
-        ++ [ "relay" ];
-
-      # Relay configuration for outbound mail
-      remote.relay = {
-        address = "localhost";
-        port = 25;
-        protocol = "smtp";
-      };
-
-      # Authentication required for outbound
-      auth.require = true;
 
       # Tracer for logging
       tracer.stdout = {
@@ -145,33 +147,215 @@ in
         level = "info";
         ansi = false;
       };
+
+      # DKIM signatures - one per domain
+      signature = lib.listToAttrs (
+        map (d: {
+          name = d.name;
+          value = {
+            private-key = "%{file:${dkimKeyPath d.name}}%";
+            domain = d.name;
+            selector = dkimSelector;
+            headers = [
+              "From"
+              "To"
+              "Date"
+              "Subject"
+              "Message-ID"
+            ];
+            algorithm = "ed25519-sha256";
+            canonicalization = "relaxed/relaxed";
+          };
+        }) domains
+      );
+
+      # Sign outgoing mail with DKIM
+      queue.outbound.sign = map (d: d.name) domains;
     };
   };
 
-  # ACME settings
+  # Secret generators for passwords and DKIM keys
+  clan.core.vars.generators = {
+    # Fallback admin password
+    stalwart-admin-password = {
+      files.password = {
+        secret = true;
+        owner = "stalwart-mail";
+        group = "stalwart-mail";
+      };
+      script = ''
+        ${pkgs.openssl}/bin/openssl rand -base64 64 | tr -d '\n' > "$out/password"
+      '';
+    };
+  }
+  # User passwords
+  // (lib.mapAttrs' (
+    userName: _:
+    lib.nameValuePair "stalwart-user-${userName}-password" {
+      files.password = {
+        secret = true;
+        owner = "stalwart-mail";
+        group = "stalwart-mail";
+      };
+      script = ''
+        ${pkgs.openssl}/bin/openssl rand -base64 64 | tr -d '\n' > "$out/password"
+      '';
+    }
+  ) persons)
+  # DKIM Ed25519 keys for each domain
+  // (lib.listToAttrs (
+    map (
+      d:
+      lib.nameValuePair "dkim-${d.name}" {
+        files.private = {
+          secret = true;
+          owner = "stalwart-mail";
+          group = "stalwart-mail";
+        };
+        files.public = {
+          secret = false;
+        };
+        script = ''
+          # Generate Ed25519 key pair for DKIM
+          ${pkgs.openssl}/bin/openssl genpkey -algorithm Ed25519 -out "$out/private"
+          ${pkgs.openssl}/bin/openssl pkey -in "$out/private" -pubout -out "$out/public.pem"
+
+          # Extract raw base64 public key (remove PEM headers) for DNS record
+          ${pkgs.gnugrep}/bin/grep -v '^-' "$out/public.pem" | tr -d '\n' > "$out/public"
+        '';
+      }
+    ) domains
+  ));
+
+  # ACME certificates for mail domains
+  # Use webroot challenge served by Caddy
   security.acme = {
     acceptTerms = true;
     defaults.email = "noah@huesser.dev";
 
-    certs.${mailHostname} = {
-      group = "stalwart-mail";
-      extraDomainNames = map (d: "mail.${d.name}") (lib.filter (d: !d.primary) domains);
-      # Use webroot with Caddy
-      webroot = "/var/lib/acme/acme-challenge";
-    };
+    certs = lib.listToAttrs (
+      map (d: {
+        name = "mail.${d.name}";
+        value = {
+          webroot = "/var/lib/acme/acme-challenge";
+          group = "acme";
+          reloadServices = [ "stalwart-mail" ];
+        };
+      }) domains
+    );
   };
 
-  # Caddy serves ACME challenges and reverse proxies webadmin/JMAP
-  services.caddy.virtualHosts = lib.listToAttrs (
+  # Both Caddy and Stalwart need to read ACME certs
+  users.users.stalwart-mail.extraGroups = [ "acme" ];
+  users.users.caddy.extraGroups = [ "acme" ];
+
+  # Generate autoconfig XML for each domain
+  environment.etc = lib.listToAttrs (
     map (d: {
-      name = "mail.${d.name}";
+      name = "stalwart/autoconfig-${d.name}.xml";
       value = {
-        extraConfig = ''
-          reverse_proxy localhost:8080
+        text = ''
+          <?xml version="1.0" encoding="UTF-8"?>
+          <clientConfig version="1.1">
+            <emailProvider id="${d.name}">
+              <domain>${d.name}</domain>
+              <displayName>${d.name} Mail</displayName>
+              <displayShortName>${d.name}</displayShortName>
+              <incomingServer type="imap">
+                <hostname>mail.${d.name}</hostname>
+                <port>993</port>
+                <socketType>SSL</socketType>
+                <username>%EMAILLOCALPART%</username>
+                <authentication>password-cleartext</authentication>
+              </incomingServer>
+              <incomingServer type="imap">
+                <hostname>mail.${d.name}</hostname>
+                <port>143</port>
+                <socketType>STARTTLS</socketType>
+                <username>%EMAILLOCALPART%</username>
+                <authentication>password-cleartext</authentication>
+              </incomingServer>
+              <outgoingServer type="smtp">
+                <hostname>mail.${d.name}</hostname>
+                <port>465</port>
+                <socketType>SSL</socketType>
+                <username>%EMAILLOCALPART%</username>
+                <authentication>password-cleartext</authentication>
+              </outgoingServer>
+              <outgoingServer type="smtp">
+                <hostname>mail.${d.name}</hostname>
+                <port>587</port>
+                <socketType>STARTTLS</socketType>
+                <username>%EMAILLOCALPART%</username>
+                <authentication>password-cleartext</authentication>
+              </outgoingServer>
+            </emailProvider>
+          </clientConfig>
         '';
       };
     }) domains
   );
+
+  # Caddy serves autoconfig and reverse proxies webadmin/JMAP
+  services.caddy.virtualHosts =
+    # HTTP handlers for ACME challenges (must be on port 80, not HTTPS)
+    lib.listToAttrs (
+      map (d: {
+        name = "http://mail.${d.name}";
+        value = {
+          extraConfig = ''
+            # Serve ACME HTTP-01 challenges
+            handle /.well-known/acme-challenge/* {
+              root * /var/lib/acme/acme-challenge
+              file_server
+            }
+            # Redirect everything else to HTTPS
+            handle {
+              redir https://{host}{uri} permanent
+            }
+          '';
+        };
+      }) domains
+    )
+    # mail.* HTTPS virtual hosts for webadmin/JMAP (using security.acme certs)
+    // lib.listToAttrs (
+      map (d: {
+        name = "mail.${d.name}";
+        value = {
+          useACMEHost = "mail.${d.name}";
+          extraConfig = ''
+            # Proxy to Stalwart
+            reverse_proxy localhost:8080
+          '';
+        };
+      }) domains
+    )
+    # autoconfig.* virtual hosts for Thunderbird autodiscovery
+    // lib.listToAttrs (
+      map (d: {
+        name = "autoconfig.${d.name}";
+        value = {
+          extraConfig = ''
+            handle /mail/config-v1.1.xml {
+              header Content-Type application/xml
+              file_server {
+                root /etc/stalwart
+                index autoconfig-${d.name}.xml
+              }
+              rewrite * /autoconfig-${d.name}.xml
+            }
+          '';
+        };
+      }) domains
+    )
+    // {
+      # Auth domain for OIDC consumers
+      ${authDomain} = {
+        extraConfig = ''
+          reverse_proxy localhost:8080
+        '';
+      };
+    };
 
   # Firewall rules for mail
   networking.firewall.allowedTCPPorts = [
@@ -182,6 +366,4 @@ in
     993 # IMAPS
   ];
 
-  # Ensure stalwart can read ACME certs
-  users.users.stalwart-mail.extraGroups = [ "acme" ];
 }

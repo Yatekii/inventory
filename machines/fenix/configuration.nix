@@ -9,7 +9,6 @@ in
     ./disko.nix
     ../../modules/clan/shared.nix
     ../../modules/clan/caddy.nix
-    ../../modules/clan/kanidm.nix
     ../../modules/clan/stalwart.nix
     ../../modules/clan/ssh-keys.nix
   ];

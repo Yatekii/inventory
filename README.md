@@ -2,6 +2,17 @@
 
 This repo will hold the complete configuration of all of yatekii's devices.
 
+## Services
+
+| Service                                     | Host        | URL                                | GitHub                                                            |
+| ------------------------------------------- | ----------- | ---------------------------------- | ----------------------------------------------------------------- |
+| [Stalwart](https://stalw.art)               | fenix       | mail.huesser.dev, auth.huesser.dev | [stalwartlabs/stalwart](https://github.com/stalwartlabs/stalwart) |
+| [Caddy](https://caddyserver.com)            | aiur, fenix | -                                  | [caddyserver/caddy](https://github.com/caddyserver/caddy)         |
+| [Conduwuit](https://conduwuit.puppyirl.gay) | aiur        | -                                  | [girlbossceo/conduwuit](https://github.com/girlbossceo/conduwuit) |
+| [Zerotier](https://zerotier.com)            | aiur        | -                                  | [zerotier/ZeroTierOne](https://github.com/zerotier/ZeroTierOne)   |
+| [Mealie](https://mealie.io)                 | aiur        | -                                  | [mealie-recipes/mealie](https://github.com/mealie-recipes/mealie) |
+| [Syncthing](https://syncthing.net)          | auraya      | -                                  | [syncthing/syncthing](https://github.com/syncthing/syncthing)     |
+
 ## Setting up this repository on a new host
 
 Run `./install` to install nix and provision the host initially to bring up the entire user environment.
@@ -76,8 +87,7 @@ Secondary server for personal productivity services.
 **Services:**
 
 - Caddy (reverse proxy with automatic HTTPS)
-- Kanidm (identity provider / SSO) at auth.huesser.dev
-- Stalwart (email server) with OIDC authentication via Kanidm
+- Stalwart (email server + identity provider) at mail.huesser.dev and auth.huesser.dev
 
 **Setup:**
 
@@ -86,108 +96,64 @@ nix run .#apply-tf  # Provision infrastructure
 clan machines update fenix  # Deploy NixOS configuration
 ```
 
-## Authentication (Kanidm)
+## Authentication & Email (Stalwart)
 
-Kanidm provides Single Sign-On (SSO) for all services. It is hosted on fenix at `auth.huesser.dev`.
+Stalwart Mail Server provides both email services and acts as an OIDC identity provider. It is hosted on fenix with the web interface at `mail.huesser.dev` and OIDC endpoints at `auth.huesser.dev`.
 
 ### Managed Users
 
-Users are defined declaratively in `modules/clan/individuals.nix`:
+Users are defined declaratively in `modules/clan/persons.nix`:
 
-| User | Email            | Groups                                     |
-| ---- | ---------------- | ------------------------------------------ |
-| noah | noah@huesser.dev | idm_admins, stalwart_users, stalwart_admin |
-
-### Groups
-
-| Group            | Purpose                                   |
-| ---------------- | ----------------------------------------- |
-| `idm_admins`     | Built-in Kanidm group for user management |
-| `stalwart_users` | Access to mail services                   |
-| `stalwart_admin` | Admin access to Stalwart web UI           |
-
-**Note:** Group names use underscores (matching Kanidm's built-in groups), not periods. Periods conflict with Kanidm's SPN format.
-
-### OAuth2/OIDC Applications
-
-| Application | URL              | Description                   |
-| ----------- | ---------------- | ----------------------------- |
-| Stalwart    | mail.huesser.dev | Email server (IMAP/SMTP/JMAP) |
+| User | Email            | Role  |
+| ---- | ---------------- | ----- |
+| noah | noah@huesser.dev | admin |
 
 ### Adding a New User
 
-1. Edit `modules/clan/individuals.nix`
-2. Add to `individuals`:
+1. Edit `modules/clan/persons.nix`
+2. Add to `persons`:
    ```nix
-   individuals = {
+   persons = {
      newuser = {
        displayName = "New User";
        mailAddresses = [ "newuser@huesser.dev" ];
-       groups = [ "stalwart_users" ];
+       admin = false;  # or true for admin access
      };
    };
    ```
-3. Add new groups to `groups` if needed
-4. Run `clan machines update fenix`
+3. Run `clan machines update fenix`
 
-### Adding a New OAuth2 Application
-
-1. Edit `modules/clan/kanidm.nix`
-2. Add to `provision.systems.oauth2`:
-   ```nix
-   systems.oauth2 = {
-     myapp = {
-       displayName = "My Application";
-       originUrl = "https://myapp.huesser.dev/callback";
-       originLanding = "https://myapp.huesser.dev";
-       scopeMaps = {
-         "myapp.users" = [ "openid" "email" "profile" ];
-       };
-     };
-   };
-   ```
-3. Create corresponding access group in `individuals.nix`
-4. Run `clan machines update fenix`
+**Note:** User changes require a Stalwart restart (happens automatically during deploy) because the in-memory directory is loaded at startup.
 
 ### Secrets
 
-The following secrets are auto-generated and stored in clan vars:
+User passwords are auto-generated and stored in clan vars:
 
-| Secret                      | Purpose                                                    |
-| --------------------------- | ---------------------------------------------------------- |
-| `kanidm-idm-admin-password` | Used by provisioning service to set initial user passwords |
-| `oidc-stalwart-secret`      | OAuth2 client secret for Stalwart ↔ Kanidm                |
-| `oidc-user-<name>-password` | Initial login password for each user                       |
+| Secret                          | Purpose                      |
+| ------------------------------- | ---------------------------- |
+| `stalwart-admin-password`       | Fallback admin account       |
+| `stalwart-user-<name>-password` | Login password for each user |
 
-To retrieve a user's initial password:
-
-```bash
-cat vars/per-machine/fenix/oidc-user-noah-password/password/secret
-```
-
-**Note:** Users in `idm_admins` group can manage other users via the Kanidm web UI at `auth.huesser.dev`.
-
-### Email Authentication
-
-Stalwart uses Kanidm for OIDC authentication. Mail clients that support OAUTHBEARER can authenticate directly. For clients without OAuth support (Thunderbird, Apple Mail), use App Passwords generated in the Stalwart web interface.
-
-**Important:** Users must log in via the web interface at least once before they can receive email, as Kanidm OIDC doesn't provide a way to enumerate users offline.
-
-### Troubleshooting
-
-#### Renaming or removing groups/users
-
-The `kanidm-provision` tool with `autoRemove = true` automatically synchronizes state. When you rename a group (e.g., `foo` → `bar`), the old group is automatically deleted and the new one created. No manual database reset needed.
-
-#### Kanidm provisioning fails with 403 Forbidden
-
-If `kanidm-provision` fails with a 403 error when creating groups (especially `ext_idm_provisioned_entities`), the database was likely created before the `withSecretProvisioning` patches were applied. The solution is to reset the database:
+To retrieve a user's password:
 
 ```bash
-# On fenix:
-sudo systemctl stop kanidm
-sudo rm -rf /var/lib/kanidm/kanidm.db
-sudo systemctl start kanidm
+sops -d vars/per-machine/fenix/stalwart-user-noah-password/password/secret
 ```
 
-The database will be recreated with proper access control profiles on next startup. User passwords will be re-set automatically (the service queries Kanidm to check if credentials exist).
+### OIDC Endpoints
+
+Stalwart exposes OIDC endpoints at `auth.huesser.dev` for use by other services:
+
+| Endpoint      | URL                                                       |
+| ------------- | --------------------------------------------------------- |
+| Discovery     | https://auth.huesser.dev/.well-known/openid-configuration |
+| Authorization | https://mail.huesser.dev/authorize/code                   |
+| Token         | https://mail.huesser.dev/auth/token                       |
+| UserInfo      | https://mail.huesser.dev/auth/userinfo                    |
+| JWKS          | https://mail.huesser.dev/auth/jwks.json                   |
+
+### Email Access
+
+- **Web Interface:** https://mail.huesser.dev
+- **IMAP:** mail.huesser.dev:993 (TLS)
+- **SMTP Submission:** mail.huesser.dev:465 (TLS) or :587 (STARTTLS)
