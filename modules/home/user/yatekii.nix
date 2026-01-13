@@ -14,4 +14,14 @@ in
     pkgs.rectangle
     pkgs.bat
   ];
+
+  launchd.agents.rectangle = {
+    enable = true;
+    config = {
+      ProgramArguments = [ "${pkgs.rectangle}/Applications/Rectangle.app/Contents/MacOS/Rectangle" ];
+      RunAtLoad = true;
+      KeepAlive = false;
+      ProcessType = "Interactive";
+    };
+  };
 }
