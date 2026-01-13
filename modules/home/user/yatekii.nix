@@ -12,5 +12,6 @@ in
     pkgs.ripgrep
     pkgs.direnv
     pkgs.rectangle
+    pkgs.bat
   ];
 }
