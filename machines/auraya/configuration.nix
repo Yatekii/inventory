@@ -58,4 +58,8 @@ in
     "vlc"
     "caffeine"
   ];
+
+  homebrew.brews = [
+    "act"
+  ];
 }
