@@ -77,7 +77,6 @@
           # Import the Clan flake-parts module
           imports = [
             clan-core.flakeModules.default
-            inputs.flake-parts.flakeModules.modules
             {
               perSystem =
                 { ... }:

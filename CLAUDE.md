@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Commit conventions
+
+Do not add `Co-Authored-By: Claude` (or any similar AI attribution) to commits. Commits should read as if written by a human programmer.
+
 ## Overview
 
 This is "khala" - a NixOS/Nix flake-based infrastructure repository managing multiple machines using Clan, nix-darwin, home-manager, and Terraform/OpenTofu for Hetzner Cloud provisioning.
