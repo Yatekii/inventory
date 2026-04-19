@@ -158,8 +158,42 @@ Stalwart exposes OIDC endpoints at `auth.huesser.dev` for use by other services:
 - **IMAP:** mail.huesser.dev:993 (TLS)
 - **SMTP Submission:** mail.huesser.dev:465 (TLS) or :587 (STARTTLS)
 
+### DNS Records Required
+
+For each mail domain, the following DNS records are needed:
+
+| Record Type | Name                       | Value                                |
+| ----------- | -------------------------- | ------------------------------------ |
+| A/CNAME     | mail.domain.tld            | Server IP or mail.primary-domain.tld |
+| MX          | domain.tld                 | mail.domain.tld                      |
+| TXT         | domain.tld                 | SPF record: `v=spf1 mx ~all`         |
+| TXT         | rsa.\_domainkey.domain.tld | RSA DKIM public key (from vars)      |
+| TXT         | ed.\_domainkey.domain.tld  | Ed25519 DKIM public key (from vars)  |
+| TXT         | \_dmarc.domain.tld         | DMARC policy                         |
+
+DKIM public keys are generated automatically and stored in `vars/per-machine/fenix/dkim-rsa-<domain>/public/value` and `vars/per-machine/fenix/dkim-ed25519-<domain>/public/value`.
+
+### Reverse DNS (PTR Record)
+
+**Critical for email deliverability:** The server's IP must have a PTR record pointing to the mail hostname.
+
+1. Log in to [Hetzner Cloud Console](https://console.hetzner.cloud/)
+2. Select your project → server (fenix) → Networking tab
+3. Set Reverse DNS for the IPv4 to: `mail.huesser.dev`
+
+Without proper reverse DNS, many mail servers will reject or spam-filter your emails.
+
+### Google DNS Cache
+
+When adding new DKIM records, Google may cache negative (NXDOMAIN) responses. If Gmail shows `dkim=permerror (no key)` but other validators pass:
+
+1. Go to: https://developers.google.com/speed/public-dns/cache
+2. Enter the DKIM record (e.g., `rsa._domainkey.domain.tld`)
+3. Select TXT and click "Flush cache"
+
 ### Known Limitations
 
 - **Web UI Dashboard:** The dashboard shows 0 users/domains because Stalwart's API doesn't expose full principal data from in-memory directories. Authentication and mail delivery still work correctly.
 - **Live Telemetry:** The "Not found" errors on dashboard pages are because Live Tracing/Telemetry is an Enterprise-only feature in Stalwart Community Edition.
 - **Outbound Port 25:** Hetzner blocks outbound port 25 by default. A support request must be submitted to unblock it for sending mail to external servers.
+- **Gmail and Ed25519 DKIM:** Gmail does not support Ed25519 DKIM verification. Always use RSA signatures (dual-signing is configured automatically).

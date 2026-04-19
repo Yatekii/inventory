@@ -15,11 +15,15 @@ let
   # Certificate directories for each mail domain
   certDir = domain: config.security.acme.certs."mail.${domain}".directory;
 
-  # DKIM selector (used in DNS record name: <selector>._domainkey.<domain>)
-  dkimSelector = "default";
+  # DKIM selectors (used in DNS record name: <selector>._domainkey.<domain>)
+  # We use separate selectors for RSA and Ed25519 to allow dual-signing
+  dkimSelectorRsa = "rsa";
+  dkimSelectorEd25519 = "ed";
 
-  # Helper to get DKIM key path for a domain
-  dkimKeyPath = domain: config.clan.core.vars.generators."dkim-${domain}".files.private.path;
+  # Helper to get DKIM key paths for a domain
+  dkimKeyPathRsa = domain: config.clan.core.vars.generators."dkim-rsa-${domain}".files.private.path;
+  dkimKeyPathEd25519 =
+    domain: config.clan.core.vars.generators."dkim-ed25519-${domain}".files.private.path;
 in
 {
   # Stalwart Mail Server
@@ -29,6 +33,34 @@ in
   services.stalwart-mail = {
     enable = true;
     settings = {
+      # Allow settings to be read from local config file
+      # Wildcards covering Stalwart defaults + our additional config
+      config.local-keys = [
+        # Defaults (with wildcards where possible)
+        "store.*"
+        "directory.*"
+        "tracer.*"
+        "!server.blocked-ip.*"
+        "!server.allowed-ip.*"
+        "server.*"
+        "authentication.*"
+        "cluster.*"
+        "config.local-keys.*"
+        "storage.*"
+        "certificate.*"
+        # Additional keys for DKIM, mail routing, etc.
+        "auth.*"
+        "signature.*"
+        "report.*"
+        "resolver.*"
+        "session.*"
+        "queue.*"
+        "http.*"
+        "metrics.*"
+        "spam-filter.*"
+        "webadmin.*"
+      ];
+
       # Server identification
       server.hostname = mailHostname;
 
@@ -160,29 +192,63 @@ in
       # Enable metrics for Web UI dashboard
       metrics.prometheus.enable = true;
 
-      # DKIM signatures - one per domain
-      signature = lib.listToAttrs (
-        map (d: {
-          name = d.name;
-          value = {
-            private-key = "%{file:${dkimKeyPath d.name}}%";
-            domain = d.name;
-            selector = dkimSelector;
-            headers = [
-              "From"
-              "To"
-              "Date"
-              "Subject"
-              "Message-ID"
-            ];
-            algorithm = "ed25519-sha256";
-            canonicalization = "relaxed/relaxed";
-          };
-        }) domains
-      );
+      # DKIM signatures - RSA and Ed25519 per domain for dual-signing
+      # Gmail and many providers only support RSA, so we need both for compatibility
+      # Stalwart requires signature IDs to follow the pattern: ${KEYTYPE}-${DOMAIN}
+      # See: https://github.com/stalwartlabs/mail-server/issues/1205
+      signature =
+        # RSA signatures (for Gmail and legacy compatibility)
+        lib.listToAttrs (
+          map (d: {
+            name = "rsa-${d.name}";
+            value = {
+              private-key = "%{file:${dkimKeyPathRsa d.name}}%";
+              domain = d.name;
+              selector = dkimSelectorRsa;
+              headers = [
+                "From"
+                "To"
+                "Date"
+                "Subject"
+                "Message-ID"
+              ];
+              algorithm = "rsa-sha256";
+              canonicalization = "relaxed/relaxed";
+            };
+          }) domains
+        )
+        # Ed25519 signatures (modern, more secure, but not widely supported yet)
+        // lib.listToAttrs (
+          map (d: {
+            name = "ed25519-${d.name}";
+            value = {
+              private-key = "%{file:${dkimKeyPathEd25519 d.name}}%";
+              domain = d.name;
+              selector = dkimSelectorEd25519;
+              headers = [
+                "From"
+                "To"
+                "Date"
+                "Subject"
+                "Message-ID"
+              ];
+              algorithm = "ed25519-sha256";
+              canonicalization = "relaxed/relaxed";
+            };
+          }) domains
+        );
 
-      # Sign outgoing mail with DKIM
-      queue.outbound.sign = map (d: d.name) domains;
+      # Sign outgoing mail with DKIM (dual-signing with RSA + Ed25519)
+      # Use auth.dkim.sign for proper DKIM signing
+      # Must be a Stalwart expression - use conditional to only sign authenticated submissions
+      # RSA signature listed first for maximum compatibility
+      auth.dkim.sign = [
+        {
+          "if" = "listener != 'smtp'";
+          "then" = "[ ${lib.concatMapStringsSep ", " (d: "'rsa-${d.name}', 'ed25519-${d.name}'") domains} ]";
+        }
+        { "else" = false; }
+      ];
     };
   };
 
@@ -214,11 +280,36 @@ in
       '';
     }
   ) persons)
-  # DKIM Ed25519 keys for each domain
+  # DKIM RSA keys for each domain (Gmail and legacy compatibility)
   // (lib.listToAttrs (
     map (
       d:
-      lib.nameValuePair "dkim-${d.name}" {
+      lib.nameValuePair "dkim-rsa-${d.name}" {
+        files.private = {
+          secret = true;
+          owner = "stalwart-mail";
+          group = "stalwart-mail";
+        };
+        files.public = {
+          secret = false;
+        };
+        script = ''
+          # Generate 2048-bit RSA key pair for DKIM
+          # Use -traditional flag for OpenSSL 3 compatibility with Stalwart
+          ${pkgs.openssl}/bin/openssl genrsa -traditional -out "$out/private" 2048 2>/dev/null
+
+          # Extract public key in format suitable for DNS TXT record
+          ${pkgs.openssl}/bin/openssl rsa -in "$out/private" -pubout -outform PEM 2>/dev/null | \
+            ${pkgs.gnugrep}/bin/grep -v '^-' | tr -d '\n' > "$out/public"
+        '';
+      }
+    ) domains
+  ))
+  # DKIM Ed25519 keys for each domain (modern, more secure)
+  // (lib.listToAttrs (
+    map (
+      d:
+      lib.nameValuePair "dkim-ed25519-${d.name}" {
         files.private = {
           secret = true;
           owner = "stalwart-mail";
@@ -232,8 +323,13 @@ in
           ${pkgs.openssl}/bin/openssl genpkey -algorithm Ed25519 -out "$out/private"
           ${pkgs.openssl}/bin/openssl pkey -in "$out/private" -pubout -out "$out/public.pem"
 
-          # Extract raw base64 public key (remove PEM headers) for DNS record
-          ${pkgs.gnugrep}/bin/grep -v '^-' "$out/public.pem" | tr -d '\n' > "$out/public"
+          # Extract raw 32-byte Ed25519 public key for DNS record
+          # The PEM contains SPKI format (44 bytes) with 12-byte ASN.1 header
+          # We need just the raw key (last 32 bytes) in base64
+          ${pkgs.gnugrep}/bin/grep -v '^-' "$out/public.pem" | tr -d '\n' | \
+            ${pkgs.coreutils}/bin/base64 -d | \
+            ${pkgs.coreutils}/bin/tail -c 32 | \
+            ${pkgs.coreutils}/bin/base64 | tr -d '\n' > "$out/public"
         '';
       }
     ) domains

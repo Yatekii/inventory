@@ -121,3 +121,34 @@ nix develop -c clan machines update fenix
 ```
 
 **Important**: Always use `clan machines update` to test provisioning, not just `systemctl start`. This ensures the full NixOS activation runs, including the kanidm post-start provisioning script.
+
+## Stalwart Mail Server (Email)
+
+Stalwart is configured in `modules/clan/stalwart.nix` with domains in `modules/clan/domains.nix` and users in `modules/clan/persons.nix`.
+
+### DKIM Configuration
+
+- **Dual-signing**: Both RSA and Ed25519 signatures are generated (Gmail only supports RSA)
+- **Signature naming**: Must follow `${KEYTYPE}-${DOMAIN}` pattern (e.g., `rsa-jarty.ch`)
+- **Selectors**: `rsa` for RSA keys, `ed` for Ed25519 keys
+- **Keys location**: Generated automatically in `vars/per-machine/fenix/dkim-{rsa,ed25519}-<domain>/`
+
+### Required DNS Records
+
+For each mail domain:
+
+- `rsa._domainkey.<domain>` - RSA DKIM public key (TXT)
+- `ed._domainkey.<domain>` - Ed25519 DKIM public key (TXT, optional)
+- MX, SPF, DMARC records
+
+### Reverse DNS (PTR)
+
+**Critical**: Set PTR record in Hetzner Cloud Console → Server → Networking → Reverse DNS to `mail.huesser.dev`. Without this, emails may be rejected or marked as spam.
+
+### Troubleshooting DKIM
+
+If Gmail shows `dkim=permerror (no key)` but mail-tester.com shows DKIM as valid:
+
+1. Google cached a negative DNS response before the record existed
+2. Flush Google's DNS cache: https://developers.google.com/speed/public-dns/cache
+3. Enter the DKIM record name (e.g., `rsa._domainkey.jarty.ch`), select TXT, flush
