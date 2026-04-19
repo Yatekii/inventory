@@ -1,4 +1,4 @@
-{ ... }:
+{ pkgs, ... }:
 {
   programs.git = {
     enable = true;
@@ -23,4 +23,8 @@
       signByDefault = true;
     };
   };
+
+  home.packages = [
+    pkgs.gh
+  ];
 }
