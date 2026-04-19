@@ -57,9 +57,12 @@ in
   homebrew.casks = [
     "vlc"
     "caffeine"
+    "macfuse"
+    "claude-code"
   ];
 
   homebrew.brews = [
     "act"
+    "pkg-config"
   ];
 }
