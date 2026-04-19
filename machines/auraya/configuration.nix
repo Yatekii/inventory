@@ -12,7 +12,8 @@ in
     }
     self.inputs.nix-homebrew.darwinModules.nix-homebrew
     ../../modules/darwin/homebrew.nix
-    ./yatekii.nix
+    ../../modules/darwin/apps.nix
+    ../../modules/darwin/users/yatekii.nix
   ]
   ++ gatherModules lib [ ../../modules/flake/overlays ];
 
@@ -23,19 +24,6 @@ in
   system.stateVersion = 6;
   system.primaryUser = "yatekii";
 
-  # Home Manager configuration for yatekii
-  home-manager.users.yatekii =
-    { pkgs, ... }:
-    {
-      home.username = "yatekii";
-      home.homeDirectory = "/Users/yatekii";
-      home.stateVersion = "25.05";
-
-      home.packages = [
-        pkgs.htop
-      ];
-    };
-
   # Allow touch ID to be used for sudo password prompts.
   security.pam.services.sudo_local.touchIdAuth = true;
 
@@ -43,22 +31,4 @@ in
   system.defaults.NSGlobalDomain.ApplePressAndHoldEnabled = false;
 
   system.defaults.NSGlobalDomain."com.apple.trackpad.forceClick" = false;
-
-  homebrew.enable = true;
-
-  # TODO: How can we move this to a module?
-  # We use homebrew because the nixpkg is not available on darwin.
-  homebrew.casks = [
-    "vlc"
-    "caffeine"
-    "macfuse"
-    "claude-code@latest"
-    "gimp"
-    "kicad"
-    "stats"
-  ];
-
-  homebrew.brews = [
-    "act"
-  ];
 }
