@@ -58,11 +58,13 @@ in
     "vlc"
     "caffeine"
     "macfuse"
-    "claude-code"
+    "claude-code@latest"
+    "gimp"
+    "kicad"
+    "stats"
   ];
 
   homebrew.brews = [
     "act"
-    "pkg-config"
   ];
 }
