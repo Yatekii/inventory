@@ -23,12 +23,4 @@ in
   nixpkgs.hostPlatform = "aarch64-darwin";
   system.stateVersion = 6;
   system.primaryUser = "yatekii";
-
-  # Allow touch ID to be used for sudo password prompts.
-  security.pam.services.sudo_local.touchIdAuth = true;
-
-  # Do not show the special/accented characters prompt on press and hold of characters.
-  system.defaults.NSGlobalDomain.ApplePressAndHoldEnabled = false;
-
-  system.defaults.NSGlobalDomain."com.apple.trackpad.forceClick" = false;
 }
