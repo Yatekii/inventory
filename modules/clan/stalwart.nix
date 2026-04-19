@@ -30,7 +30,7 @@ in
   # Documentation: https://stalw.art/docs/category/configuration
   # NixOS Wiki: https://wiki.nixos.org/wiki/Stalwart
 
-  services.stalwart-mail = {
+  services.stalwart = {
     enable = true;
     settings = {
       # Allow settings to be read from local config file
@@ -136,7 +136,7 @@ in
       # Storage configuration using RocksDB
       store.db = {
         type = "rocksdb";
-        path = "/var/lib/stalwart-mail/data";
+        path = "/var/lib/stalwart/data";
         compression = "lz4";
       };
 
@@ -184,7 +184,7 @@ in
       tracer.log = {
         type = "log";
         level = "info";
-        path = "/var/lib/stalwart-mail/logs";
+        path = "/var/lib/stalwart/logs";
         prefix = "stalwart.log";
         enable = true;
       };
@@ -258,8 +258,8 @@ in
     stalwart-admin-password = {
       files.password = {
         secret = true;
-        owner = "stalwart-mail";
-        group = "stalwart-mail";
+        owner = "stalwart";
+        group = "stalwart";
       };
       script = ''
         ${pkgs.openssl}/bin/openssl rand -base64 64 | tr -d '\n' > "$out/password"
@@ -272,8 +272,8 @@ in
     lib.nameValuePair "stalwart-user-${userName}-password" {
       files.password = {
         secret = true;
-        owner = "stalwart-mail";
-        group = "stalwart-mail";
+        owner = "stalwart";
+        group = "stalwart";
       };
       script = ''
         ${pkgs.openssl}/bin/openssl rand -base64 64 | tr -d '\n' > "$out/password"
@@ -287,8 +287,8 @@ in
       lib.nameValuePair "dkim-rsa-${d.name}" {
         files.private = {
           secret = true;
-          owner = "stalwart-mail";
-          group = "stalwart-mail";
+          owner = "stalwart";
+          group = "stalwart";
         };
         files.public = {
           secret = false;
@@ -312,8 +312,8 @@ in
       lib.nameValuePair "dkim-ed25519-${d.name}" {
         files.private = {
           secret = true;
-          owner = "stalwart-mail";
-          group = "stalwart-mail";
+          owner = "stalwart";
+          group = "stalwart";
         };
         files.public = {
           secret = false;
@@ -347,14 +347,14 @@ in
         value = {
           webroot = "/var/lib/acme/acme-challenge";
           group = "acme";
-          reloadServices = [ "stalwart-mail" ];
+          reloadServices = [ "stalwart" ];
         };
       }) domains
     );
   };
 
   # Both Caddy and Stalwart need to read ACME certs
-  users.users.stalwart-mail.extraGroups = [ "acme" ];
+  users.users.stalwart.extraGroups = [ "acme" ];
   users.users.caddy.extraGroups = [ "acme" ];
 
   # Generate autoconfig XML for each domain
