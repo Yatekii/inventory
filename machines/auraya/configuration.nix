@@ -12,10 +12,7 @@ in
     }
     self.inputs.nix-homebrew.darwinModules.nix-homebrew
   ]
-  ++ gatherModules lib [
-    ../../modules/darwin
-    ../../modules/flake/overlays
-  ];
+  ++ gatherModules lib [ ../../modules/darwin ];
 
   # Used for clan to connect to the host when running any of the machine commands.
   clan.core.networking.targetHost = "yatekii@localhost";
