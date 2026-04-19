@@ -1,4 +1,5 @@
 .direnv
+.claude/
 .terraform
 config.tf.json
 terraform.tfstate.backup
