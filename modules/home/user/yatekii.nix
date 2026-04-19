@@ -13,6 +13,10 @@ in
     pkgs.direnv
     pkgs.rectangle
     pkgs.bat
+    pkgs.tokei
+    pkgs.colima
+    pkgs.docker-client
+    pkgs.docker-compose
   ];
 
   launchd.agents.rectangle = {
