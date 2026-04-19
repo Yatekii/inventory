@@ -11,7 +11,7 @@ in
       home-manager.verbose = true;
     }
     self.inputs.nix-homebrew.darwinModules.nix-homebrew
-    ./homebrew.nix
+    ../../modules/darwin/homebrew.nix
     ./yatekii.nix
   ]
   ++ gatherModules lib [ ../../modules/flake/overlays ];
@@ -22,12 +22,6 @@ in
   nixpkgs.hostPlatform = "aarch64-darwin";
   system.stateVersion = 6;
   system.primaryUser = "yatekii";
-
-  # User configuration
-  users.users.yatekii = {
-    name = "yatekii";
-    home = "/Users/yatekii";
-  };
 
   # Home Manager configuration for yatekii
   home-manager.users.yatekii =
