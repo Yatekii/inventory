@@ -4,41 +4,6 @@ Centralized tracking of pending improvements and technical debt.
 
 ## High Priority
 
-### SSH Keys: Migrate to Clan Vars System
-
-**File:** `modules/clan/ssh-keys.nix`
-
-Currently using a hardcoded SSH public key. Should migrate to clan's vars system for better secret management.
-
-**To fix:**
-
-1. Update `modules/clan/ssh-keys.nix` to use `clan.core.vars.generators`
-2. Run `clan vars generate fenix` and `clan vars generate aiur`
-3. Enter the SSH public key when prompted
-4. Remove the hardcoded key
-
-**Example vars-based implementation:**
-
-```nix
-{ config, ... }:
-{
-  clan.core.vars.generators.main-ssh-key = {
-    prompts.main-ssh-key-pub = {
-      description = "Main SSH public key for authorized access";
-      type = "line";
-      persist = true;
-    };
-    files.main-ssh-key-pub = {
-      secret = false;
-    };
-  };
-
-  users.users.root.openssh.authorizedKeys.keys = [
-    config.clan.core.vars.generators.main-ssh-key.files.main-ssh-key-pub.value
-  ];
-}
-```
-
 ### DNS A Record for auth.huesser.dev
 
 **Urgency:** Required before deploying Kanidm
@@ -85,6 +50,12 @@ Once Kanidm is stable, migrate other services:
 - Future services
 
 ## Completed
+
+### SSH Keys: Migrated to Clan Vars System
+
+- [x] Declared `clan.core.vars.generators.main-ssh-key` in `modules/clan/ssh-keys.nix` (shared, non-secret)
+- [x] Public key lives at `vars/shared/main-ssh-key/main-ssh-key-pub/value`
+- [x] `users.users.root.openssh.authorizedKeys.keys` now reads the var
 
 ### Kanidm SSO Setup
 

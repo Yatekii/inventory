@@ -1,13 +1,18 @@
-{ ... }:
-let
-  # TODO: Replace this hardcoded key with clan vars system
-  # See TODO.md for details
-  # Run: clan vars generate <machine> to set up proper var-based keys
-  mainSshKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAqpC8tYCxyTBBzf8ZFJlkye/dDY2VfY7knIHMDnHNpe noah@huesser.dev";
-in
+{ config, ... }:
 {
-  # Add the SSH key to root's authorized keys
+  clan.core.vars.generators.main-ssh-key = {
+    share = true;
+    prompts.main-ssh-key-pub = {
+      description = "Main SSH public key for authorized access";
+      type = "line";
+      persist = true;
+    };
+    files.main-ssh-key-pub = {
+      secret = false;
+    };
+  };
+
   users.users.root.openssh.authorizedKeys.keys = [
-    mainSshKey
+    config.clan.core.vars.generators.main-ssh-key.files.main-ssh-key-pub.value
   ];
 }
