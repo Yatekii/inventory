@@ -11,8 +11,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check-linux:
-    name: Evaluate (Linux)
+  flake-check:
+    name: nix flake check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,17 +25,24 @@ jobs:
 
       - uses: DeterminateSystems/magic-nix-cache-action@main
 
-      - name: nix flake check (all systems, eval only)
-        run: nix flake check --all-systems --no-build --show-trace
+      - run: nix flake check --all-systems --no-build --show-trace
 
-      - name: Evaluate NixOS toplevels
-        run: |
-          nix eval --raw .#nixosConfigurations.aiur.config.system.build.toplevel.drvPath
-          nix eval --raw .#nixosConfigurations.fenix.config.system.build.toplevel.drvPath
-
-  check-darwin:
-    name: Evaluate (Darwin)
-    runs-on: macos-latest
+  evaluate:
+    name: Evaluate ${{ matrix.host }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - host: aiur
+            runner: ubuntu-latest
+            attr: nixosConfigurations.aiur.config.system.build.toplevel.drvPath
+          - host: fenix
+            runner: ubuntu-latest
+            attr: nixosConfigurations.fenix.config.system.build.toplevel.drvPath
+          - host: auraya
+            runner: macos-latest
+            attr: darwinConfigurations.auraya.system.drvPath
     steps:
       - uses: actions/checkout@v4
 
@@ -47,5 +54,4 @@ jobs:
 
       - uses: DeterminateSystems/magic-nix-cache-action@main
 
-      - name: Evaluate auraya toplevel
-        run: nix eval --raw .#darwinConfigurations.auraya.system.drvPath
+      - run: nix eval --raw .#${{ matrix.attr }}
