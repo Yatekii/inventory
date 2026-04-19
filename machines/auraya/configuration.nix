@@ -11,11 +11,11 @@ in
       home-manager.verbose = true;
     }
     self.inputs.nix-homebrew.darwinModules.nix-homebrew
-    ../../modules/darwin/homebrew.nix
-    ../../modules/darwin/apps.nix
-    ../../modules/darwin/users/yatekii.nix
   ]
-  ++ gatherModules lib [ ../../modules/flake/overlays ];
+  ++ gatherModules lib [
+    ../../modules/darwin
+    ../../modules/flake/overlays
+  ];
 
   # Used for clan to connect to the host when running any of the machine commands.
   clan.core.networking.targetHost = "yatekii@localhost";
