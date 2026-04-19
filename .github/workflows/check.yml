@@ -1,0 +1,51 @@
+name: Flake check
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-linux:
+    name: Evaluate (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes
+            accept-flake-config = true
+
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: nix flake check (all systems, eval only)
+        run: nix flake check --all-systems --no-build --show-trace
+
+      - name: Evaluate NixOS toplevels
+        run: |
+          nix eval --raw .#nixosConfigurations.aiur.config.system.build.toplevel.drvPath
+          nix eval --raw .#nixosConfigurations.fenix.config.system.build.toplevel.drvPath
+
+  check-darwin:
+    name: Evaluate (Darwin)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: DeterminateSystems/nix-installer-action@main
+        with:
+          extra-conf: |
+            experimental-features = nix-command flakes
+            accept-flake-config = true
+
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Evaluate auraya toplevel
+        run: nix eval --raw .#darwinConfigurations.auraya.system.drvPath
