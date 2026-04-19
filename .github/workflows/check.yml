@@ -20,7 +20,7 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@main
         with:
           extra-conf: |
-            experimental-features = nix-command flakes
+            experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
 
       - uses: DeterminateSystems/magic-nix-cache-action@main
@@ -42,7 +42,7 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@main
         with:
           extra-conf: |
-            experimental-features = nix-command flakes
+            experimental-features = nix-command flakes pipe-operators
             accept-flake-config = true
 
       - uses: DeterminateSystems/magic-nix-cache-action@main
