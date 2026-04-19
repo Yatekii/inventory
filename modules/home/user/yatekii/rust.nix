@@ -18,8 +18,10 @@
       targets = [
         "aarch64-apple-darwin"
         "thumbv7em-none-eabihf"
+        "thumbv6m-none-eabi"
         "wasm32-unknown-unknown"
         "riscv32imac-unknown-none-elf"
+        "aarch64-unknown-linux-gnu"
       ];
     })
   ];
