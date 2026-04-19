@@ -17,6 +17,16 @@ in
     pkgs.colima
     pkgs.docker-client
     pkgs.docker-compose
+    pkgs.ansible
+    pkgs.bazel
+    pkgs.rbw
+    pkgs.bzip2
+    pkgs.dua
+    pkgs.ffmpeg
+    pkgs.mcap-cli
+    pkgs.ncdu
+    pkgs.restic
+    pkgs.trunk
   ];
 
   launchd.agents.rectangle = {
