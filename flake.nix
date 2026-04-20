@@ -35,10 +35,14 @@
 
     treefmt-nix.url = "github:numtide/treefmt-nix";
 
-    # mac-app-util = {
-    #   url = "github:hraban/mac-app-util";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
+    mac-app-util = {
+      url = "github:hraban/mac-app-util";
+      # Do NOT follow our nixpkgs — current nixos-unstable has a broken
+      # SBCL 2.6.1 build for fare-quasiquote-readtable. mac-app-util's own
+      # locked nixpkgs is pre-2.6.0 and builds fine. Restore the follows
+      # once nixpkgs PR #505169 (sbcl → 2.6.3) lands on master.
+      # inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs =
