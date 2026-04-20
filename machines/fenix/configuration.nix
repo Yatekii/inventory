@@ -12,6 +12,7 @@ in
     ../../modules/clan/caddy.nix
     ../../modules/clan/stalwart.nix
     ../../modules/clan/ssh-keys.nix
+    ../../modules/clan/helix.nix
   ];
 
   # Set this for clan commands use ssh i.e. `clan machines update`
