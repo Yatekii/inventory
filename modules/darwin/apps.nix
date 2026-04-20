@@ -11,6 +11,7 @@
     "gimp"
     "kicad"
     "stats"
+    "rectangle"
   ];
 
   homebrew.brews = [

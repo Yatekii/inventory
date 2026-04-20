@@ -11,7 +11,6 @@ in
     pkgs.fzf
     pkgs.ripgrep
     pkgs.direnv
-    pkgs.rectangle
     pkgs.bat
     pkgs.tokei
     pkgs.colima
@@ -28,14 +27,4 @@ in
     pkgs.restic
     pkgs.trunk
   ];
-
-  launchd.agents.rectangle = {
-    enable = true;
-    config = {
-      ProgramArguments = [ "${pkgs.rectangle}/Applications/Rectangle.app/Contents/MacOS/Rectangle" ];
-      RunAtLoad = true;
-      KeepAlive = false;
-      ProcessType = "Interactive";
-    };
-  };
 }
