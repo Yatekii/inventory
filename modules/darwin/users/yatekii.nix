@@ -1,11 +1,10 @@
-{ self, ... }:
+{ ... }:
 {
   users.users.yatekii = {
     name = "yatekii";
     home = "/Users/yatekii";
   };
 
-  home-manager.extraSpecialArgs = { inherit self; };
   home-manager.users.yatekii =
     { pkgs, ... }:
     {
