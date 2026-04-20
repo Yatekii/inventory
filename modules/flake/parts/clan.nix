@@ -78,26 +78,6 @@ in
           };
         };
 
-        syncthing-auraya = {
-          module = {
-            name = "syncthing";
-            input = "clan-core";
-          };
-          roles.peer.machines."auraya".settings = {
-            extraDevices = {
-              saru = {
-                addresses = [ "dynamic" ];
-                id = "QS4PRFF-K7CAIQ2-HZR52QV-7B3VAFZ-DZSY6PO-XLBATVF-ZV6TGVO-RZBDYQW";
-              };
-            };
-            folders = {
-              documents = {
-                path = "/Users/yatekii/Documents";
-                devices = [ "saru" ];
-              };
-            };
-          };
-        };
       };
     };
 
