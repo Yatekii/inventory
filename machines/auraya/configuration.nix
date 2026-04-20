@@ -9,6 +9,9 @@ in
       home-manager.useUserPackages = true;
       home-manager.useGlobalPkgs = false;
       home-manager.verbose = true;
+      # Auto-back-up pre-existing files HM would otherwise refuse to clobber.
+      # Collisions rename to <file>.bak instead of failing activation.
+      home-manager.backupFileExtension = "bak";
     }
     self.inputs.nix-homebrew.darwinModules.nix-homebrew
   ]
