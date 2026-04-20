@@ -48,6 +48,7 @@ in
   imports = [
     ./disko.nix
     ../../modules/clan/shared.nix
+    ../../modules/clan/nix.nix
     ../../modules/clan/caddy.nix
     ../../modules/clan/mealie.nix
     ../../modules/clan/ssh-keys.nix

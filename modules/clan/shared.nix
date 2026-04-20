@@ -5,13 +5,6 @@
   # - users (replaces root-password and user-password)
   # - trusted-nix-caches
 
-  # Enable experimental Nix features
-  nix.settings.experimental-features = [
-    "nix-command"
-    "flakes"
-    "pipe-operators"
-  ];
-
   # Locale service discovery and mDNS
   services.avahi.enable = true;
 
