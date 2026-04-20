@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ lib, osConfig, ... }:
 {
   # When only `services.syncthing.settings.{devices,folders}` change, the
   # `syncthing` launchd plist doesn't (same wrapper script), so launchd
@@ -16,9 +16,12 @@
   services.syncthing = {
     enable = true;
 
-    # Leave `cert` and `key` unset so syncthing keeps using the existing
-    # cert.pem / key.pem in `$HOME/Library/Application Support/Syncthing/`.
-    # That preserves auraya's device ID already paired with saru.
+    # Device identity (cert + private key) comes from clan vars — see
+    # `modules/darwin/syncthing.nix` for the generator. Seed values via
+    # `clan vars set auraya syncthing/cert < cert.pem` and the key
+    # equivalent before the first deploy.
+    cert = osConfig.clan.core.vars.generators.syncthing.files.cert.path;
+    key = osConfig.clan.core.vars.generators.syncthing.files.key.path;
 
     settings = {
       devices.saru = {
