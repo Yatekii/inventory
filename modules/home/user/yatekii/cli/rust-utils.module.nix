@@ -1,7 +1,4 @@
 { pkgs, ... }:
 {
-  home.packages = with pkgs; [
-    hyperfine
-    difftastic
-  ];
+  home.packages = [ pkgs.difftastic ];
 }
