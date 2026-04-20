@@ -55,7 +55,7 @@
       ...
     }:
     let
-      gatherModules = import modules/flake/_gatherModules.nix;
+      gatherModules = import modules/flake/gatherModules.nix;
     in
     flake-parts.lib.mkFlake
       {

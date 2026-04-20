@@ -6,7 +6,7 @@
       ...
     }:
     let
-      treefmtEval = self.inputs.treefmt-nix.lib.evalModule pkgs ./formatter/_treefmt.nix;
+      treefmtEval = self.inputs.treefmt-nix.lib.evalModule pkgs ./formatter/treefmt.nix;
     in
     {
       formatter = treefmtEval.config.build.wrapper;

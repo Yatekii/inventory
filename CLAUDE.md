@@ -65,7 +65,7 @@ xtask clean-terraform-files <terraform-dir>
 - Darwin-specific → `modules/darwin/`
 - Flake utilities → `flake/modules/`
 
-**Module discovery**: `gatherModules` in `modules/flake/gatherModules.nix` recursively discovers `.nix` files (excluding `_`-prefixed items).
+**Module discovery**: `gatherModules` in `modules/flake/gatherModules.nix` recursively discovers files ending in `.module.nix`. Plain `.nix` files are never auto-imported — use that suffix for shared data (`modules/helix-settings.nix`), helper functions (`modules/flake/gatherModules.nix`), or anything imported manually from a specific module.
 
 **Terraform workflow**:
 
