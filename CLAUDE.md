@@ -18,10 +18,16 @@ nix develop                     # Enter dev shell with clan-cli, tofu, xtask, gi
 nix fmt                         # Format all files (nixfmt + terraform via treefmt)
 
 # Machine configuration
-# IMPORTANT: For NixOS machines (aiur, fenix), ALWAYS use `clan machines update`, NOT `nix run .#apply`!
-nix run .#apply -- auraya       # Apply config to auraya (darwin-rebuild switch) - macOS only
-clan machines update aiur       # Deploy to aiur (NixOS) - ALWAYS use this for NixOS!
-clan machines update fenix      # Deploy to fenix (NixOS) - ALWAYS use this for NixOS!
+# ALWAYS use `clan machines update` for every host, including auraya.
+# It runs darwin-rebuild / nixos-rebuild AND seeds sops-nix keys on the target.
+clan machines update auraya     # Deploy to auraya (darwin-rebuild switch)
+clan machines update aiur       # Deploy to aiur (NixOS)
+clan machines update fenix      # Deploy to fenix (NixOS)
+# `nix run .#apply -- auraya` is the emergency bootstrap only — it skips the
+# sops key upload, so use it exclusively when auraya has no /var/lib/sops-nix/key.txt
+# yet (e.g. first deploy, or when an experimental-features change must land before
+# clan can eval the flake under sudo).
+nix run .#apply -- auraya       # Bootstrap-only fallback for auraya
 ./install                       # Bootstrap script for new hosts
 
 # Infrastructure (Terraform/OpenTofu) - always use nix run, not vanilla tofu commands
