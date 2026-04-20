@@ -12,6 +12,7 @@
     "kicad"
     "stats"
     "rectangle"
+    "zed"
   ];
 
   homebrew.brews = [
