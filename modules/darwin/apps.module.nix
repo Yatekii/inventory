@@ -13,6 +13,7 @@
     "stats"
     "rectangle"
     "zed"
+    "ghostty"
   ];
 
   homebrew.brews = [
