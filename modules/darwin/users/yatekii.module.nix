@@ -17,7 +17,7 @@
       home.packages = [
         pkgs.atool
         pkgs.httpie
-        (pkgs.callPackage ../../../packages/probe-rs.nix { })
+        pkgs.probe-rs-tools
       ];
       programs.bash.enable = true;
     };
