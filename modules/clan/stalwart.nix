@@ -32,6 +32,13 @@ in
 
   services.stalwart = {
     enable = true;
+    # stateVersion pins the dataDir / systemd user+group layout. The newer
+    # nixpkgs stalwart module (pulled in via clan-core) requires this
+    # explicitly — no default. Fenix deployed post-rename, so data lives at
+    # /var/lib/stalwart with user/group "stalwart". Do NOT change this after
+    # the first deploy on a machine; downgrading to a pre-26.05 value would
+    # make the module expect /var/lib/stalwart-mail and orphan the data.
+    stateVersion = "26.05";
     settings = {
       # Allow settings to be read from local config file
       # Wildcards covering Stalwart defaults + our additional config
