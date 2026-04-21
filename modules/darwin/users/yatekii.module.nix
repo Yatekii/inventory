@@ -14,11 +14,6 @@
       home.username = "yatekii";
       home.homeDirectory = "/Users/yatekii";
       home.stateVersion = "25.05";
-      home.packages = [
-        pkgs.atool
-        pkgs.httpie
-        pkgs.probe-rs-tools
-      ];
       programs.bash.enable = true;
     };
 }

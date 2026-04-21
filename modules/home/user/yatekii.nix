@@ -24,6 +24,7 @@ in
     pkgs.ffmpeg
     pkgs.mcap-cli
     pkgs.ncdu
+    pkgs.probe-rs-tools
     pkgs.restic
     pkgs.trunk
   ];
