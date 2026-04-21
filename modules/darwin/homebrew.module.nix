@@ -25,6 +25,11 @@
   # Align homebrew taps config with nix-homebrew
   homebrew.taps = builtins.attrNames config.nix-homebrew.taps;
 
+  # Remove casks/brews that were dropped from the Nix lists on next activation.
+  # `uninstall` keeps the app's user data behind (preferences, settings), so
+  # re-adding the cask later recovers state. `zap` would also delete that data.
+  homebrew.onActivation.cleanup = "uninstall";
+
   # We need Rosetta installed
   system.activationScripts.extraActivation.text =
     if config.nix-homebrew.enableRosetta then
