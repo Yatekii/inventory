@@ -27,6 +27,7 @@ in
           roles.server.machines = {
             aiur = { };
             fenix = { };
+            saru = { };
           };
         };
 
@@ -39,6 +40,7 @@ in
           roles.default.machines = {
             aiur = { };
             fenix = { };
+            saru = { };
           };
           roles.default.settings = {
             user = "root";
@@ -54,6 +56,7 @@ in
           roles.default.machines = {
             aiur = { };
             fenix = { };
+            saru = { };
           };
           roles.default.settings = {
             user = "yatekii";
@@ -75,6 +78,7 @@ in
           roles.default.machines = {
             aiur = { };
             fenix = { };
+            saru = { };
           };
         };
 
