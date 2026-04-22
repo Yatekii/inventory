@@ -103,7 +103,7 @@ Pop = ""
 show_always = true
 style_user = "bg:color_orange fg:color_fg0"
 style_root = "bg:color_orange fg:color_fg0"
-format = '[ $user ]($style)'
+format = '[$user]($style)'
 
 [directory]
 style = "fg:color_fg0 bg:color_yellow"
@@ -130,7 +130,7 @@ truncation_length = 24
 
 [git_status]
 style = "bg:color_aqua"
-format = '[[($all_status$ahead_behind )](fg:color_fg0 bg:color_aqua)]($style)'
+format = '[[($all_status$ahead_behind )](fg:color_fg0 bg:color_aqua bold)]($style)'
 
 [git_state]
 style = "bg:color_aqua"
@@ -138,9 +138,9 @@ format = '[[ $state( $progress_current/$progress_total) ](fg:color_fg0 bg:color_
 
 [git_metrics]
 disabled = false
-added_style = "fg:color_bright_yellow bg:color_aqua"
-deleted_style = "fg:color_bright_orange bg:color_aqua"
-format = '[[+$added]($added_style)/[-$deleted]($deleted_style) ](fg:color_fg0 bg:color_aqua)'
+added_style = "fg:color_fg0 bg:color_aqua bold"
+deleted_style = "fg:color_bg0 bg:color_aqua bold"
+format = '[+$added]($added_style)[/](fg:color_fg0 bg:color_aqua)[-$deleted]($deleted_style)[ ](bg:color_aqua)'
 
 [nodejs]
 symbol = ""
