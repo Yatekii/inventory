@@ -18,6 +18,11 @@
   # the primary consumer today.
   networking.hostId = "5a727504";
 
+  # Until `clan machines init-hardware-config saru` generates facter.json
+  # with full hardware detection, set the arch explicitly so the config
+  # evaluates. facter.json will set the same value; coexists fine.
+  nixpkgs.hostPlatform = "x86_64-linux";
+
   boot.supportedFilesystems = [ "zfs" ];
 
   # Import the existing `saru` pool (2x4TB Seagate mirror + 2x14TB WD mirror
