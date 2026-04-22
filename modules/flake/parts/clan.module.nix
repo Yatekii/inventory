@@ -44,6 +44,10 @@ in
           };
           roles.default.settings = {
             user = "root";
+            # Generate a random password instead of prompting. Override via
+            # `clan vars set <machine> user-password-root/user-password`
+            # when an existing value must be preserved (e.g. migrations).
+            prompt = false;
           };
         };
 
@@ -60,6 +64,7 @@ in
           };
           roles.default.settings = {
             user = "yatekii";
+            prompt = false;
             groups = [
               "wheel"
               "networkmanager"
