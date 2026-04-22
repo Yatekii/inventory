@@ -2,6 +2,11 @@
   "machines": {
     "fenix": {
       "installedAt": 1766936354
+    },
+    "saru": {
+      "deploy": {
+        "targetHost": "root@saru:22"
+      }
     }
   }
 }
