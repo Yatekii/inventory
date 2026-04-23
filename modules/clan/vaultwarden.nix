@@ -5,10 +5,10 @@
   ...
 }:
 let
-  vaultwarden-domain = "nvaultwarden.huesser.dev";
+  vaultwarden-domain = "vaultwarden.huesser.dev";
   vaultwarden-signups-allowed = false;
-  vaultwarden-admin-token = config.clan.core.vars.generators.admin-token.files.admin-token.path;
-  vaultwarden-log-file = "${vaultwarden-path}vaultwarden.log";
+  vaultwarden-admin-token =
+    config.clan.core.vars.generators.vaultwarden-admin-token.files.admin-token.path;
   vaultwarden-websocket-enabled = true;
   vaultwarden-host = "127.0.0.1";
   vaultwarden-port = 8222;
@@ -18,88 +18,103 @@ let
   vaultwarden-backup-path-relative = "vaultwarden-backup";
   vaultwarden-backup-path = "/var/lib/${vaultwarden-backup-path-relative}";
   vaultwarden-user = "vaultwarden";
-  vaultwarden-backup = (
-    pkgs.writeShellApplication {
-      name = "vaultwarden-backup";
-      runtimeInputs = [ pkgs.sqlite3 ];
-      text = ''
-        set -eu
-        systemctl stop vaultwarden
-        cp ${vaultwarden-path}/attachments ${vaultwarden-backup-path}/attachments
-        sqlite3 ${vaultwarden-path}/db.sqlite3 ".backup '${vaultwarden-backup-path}/db.sqlite3'"
-        systemctl start vaultwarden
-      '';
-    }
-  );
-  vaultwarden-restore = (
-    pkgs.writeShellApplication {
-      name = "vaultwarden-restore";
-      runtimeInputs = [ ];
-      text = ''
-        set -eu
-        systemctl stop vaultwarden
-        cp ${vaultwarden-backup-path}/attachments ${vaultwarden-path}/attachments
-        cp ${vaultwarden-backup-path}/db.sqlite3 ${vaultwarden-path}/db.sqlite3
-        rm ${vaultwarden-path}/db.sqlite3-wal
-        sqlite3 ${vaultwarden-path}/db.sqlite3 ".backup '${vaultwarden-backup-path}/db.sqlite3'"
-        systemctl start vaultwarden
-      '';
-    }
-  );
+
+  # Online SQLite backup + attachments copy, writes to a sibling directory
+  # that the clan restic service picks up via clan.core.state below. sqlite3
+  # `.backup` is the canonical hot-snapshot mechanism; safe to run while the
+  # server is serving requests.
+  vaultwarden-backup = pkgs.writeShellApplication {
+    name = "vaultwarden-backup";
+    runtimeInputs = [ pkgs.sqlite ];
+    text = ''
+      set -eu
+      install -d -o ${vaultwarden-user} -g ${vaultwarden-user} -m 0700 ${vaultwarden-backup-path}
+      sqlite3 ${vaultwarden-path}/db.sqlite3 ".backup '${vaultwarden-backup-path}/db.sqlite3'"
+      # Attachments + Sends + JWT signing keys + admin-panel config.
+      for p in attachments sends rsa_key.der rsa_key.pem rsa_key.pub.der rsa_key.pub.pem config.json; do
+        if [ -e "${vaultwarden-path}/$p" ]; then
+          cp -a "${vaultwarden-path}/$p" "${vaultwarden-backup-path}/"
+        fi
+      done
+    '';
+  };
+
+  vaultwarden-restore = pkgs.writeShellApplication {
+    name = "vaultwarden-restore";
+    runtimeInputs = [ pkgs.sqlite ];
+    text = ''
+      set -eu
+      systemctl stop vaultwarden
+      install -d -o ${vaultwarden-user} -g ${vaultwarden-user} -m 0700 ${vaultwarden-path}
+      cp -a ${vaultwarden-backup-path}/db.sqlite3 ${vaultwarden-path}/db.sqlite3
+      rm -f ${vaultwarden-path}/db.sqlite3-wal ${vaultwarden-path}/db.sqlite3-shm
+      for p in attachments sends rsa_key.der rsa_key.pem rsa_key.pub.der rsa_key.pub.pem config.json; do
+        if [ -e "${vaultwarden-backup-path}/$p" ]; then
+          cp -a "${vaultwarden-backup-path}/$p" "${vaultwarden-path}/"
+        fi
+      done
+      chown -R ${vaultwarden-user}:${vaultwarden-user} ${vaultwarden-path}
+      systemctl start vaultwarden
+    '';
+  };
 in
 {
-  # imports = [ ../modules/caddy.nix ];
+  environment.systemPackages = [
+    vaultwarden-backup
+    vaultwarden-restore
+  ];
 
-  # environment.systemPackages = [ vaultwarden-backup vaultwarden-restore ];
+  services.vaultwarden = {
+    enable = true;
+    dbBackend = "sqlite";
+    config = {
+      DOMAIN = "https://${vaultwarden-domain}";
+      SIGNUPS_ALLOWED = vaultwarden-signups-allowed;
+      ADMIN_TOKEN._secret = vaultwarden-admin-token;
+      WEBSOCKET_ENABLED = vaultwarden-websocket-enabled;
+      ROCKET_ADDRESS = vaultwarden-host;
+      ROCKET_PORT = vaultwarden-port;
+      WEBSOCKET_ADDRESS = vaultwarden-host;
+      WEBSOCKET_PORT = vaultwarden-websocket-port;
+    };
+  };
 
-  # services.vaultwarden = {
-  #   enable = true;
-  #   dbBackend = "sqlite";
-  #   domain = "https://${vaultwarden-domain}";
-  #   config = {
-  #     SIGNUPS_ALLOWED = vaultwarden-signups-allowed;
-  #     ADMIN_TOKEN = vaultwarden-admin-token;
-  #     LOG_FILE = vaultwarden-log-file;
-  #     WEBSOCKET_ENABLED = vaultwarden-websocket-enabled;
-  #     ROCKET_ADDRESS = vaultwarden-host;
-  #     ROCKET_PORT = vaultwarden-port;
-  #   };
-  # };
+  clan.core.vars.generators.vaultwarden-admin-token = {
+    # Random 64-char token. Retrieve once for admin-panel access:
+    #   clan vars get saru vaultwarden-admin-token/admin-token
+    script = ''
+      ${pkgs.pwgen}/bin/pwgen -s 64 1 > $out/admin-token
+    '';
+    files.admin-token = {
+      secret = true;
+      owner = vaultwarden-user;
+      mode = "0400";
+    };
+  };
 
-  # clan.core.vars.generators.admin-token = {
-  #   prompts.admin-token.description = "the PSK for administrating vaultwarden";
-  #   prompts.admin-token.type = "hidden";
-  #   prompts.admin-token.persist = true;
-  #   files.admin-token = {
-  #     secret = true;
-  #     owner = vaultwarden-user;
-  #   };
-  # };
+  services.caddy.virtualHosts."${vaultwarden-domain}".extraConfig = ''
+    reverse_proxy /* ${vaultwarden-host}:${toString vaultwarden-port}
+  ''
+  + (
+    if vaultwarden-websocket-enabled then
+      ''
+        reverse_proxy /notifications/hub ${vaultwarden-host}:${toString vaultwarden-websocket-port}
+      ''
+    else
+      ""
+  );
 
-  # services.caddy.virtualHosts."${vaultwarden-domain}".extraConfig = ''
-  #   reverse_proxy /* ${vaultwarden-host}:${toString vaultwarden-port}
-  # '' + (if vaultwarden-websocket-enabled then ''
-  #   reverse_proxy /notifications/hub ${vaultwarden-host}:${
-  #     toString vaultwarden-websocket-port
-  #   }
-  # '' else
-  #   "");
+  # clan restic picks these folders up; pre-hook writes a consistent SQLite
+  # snapshot + copies of attachments/keys; post-restore puts them back.
+  clan.core.state.vaultwarden = {
+    folders = [ vaultwarden-backup-path ];
+    preBackupScript = "${vaultwarden-backup}/bin/vaultwarden-backup";
+    postRestoreScript = "${vaultwarden-restore}/bin/vaultwarden-restore";
+  };
 
-  # clan.core.state.vaultwarden = {
-  #   folders = [ vaultwarden-backup-path ];
-  #   preBackupScript = "${vaultwarden-backup}/bin/vaultwarden-backup";
-  #   postRestoreScript = "${vaultwarden-backup}/bin/vaultwarden-restore";
-  # };
-
-  # programs.ssh.knownHosts = {
-  #   storagebox-ed25519.hostNames =
-  #     [ "[${names.hetzner-offsite-backup-host}]:23" ];
-  #   storagebox-ed25519.publicKey =
-  #     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIICf9svRenC/PLKIL9nk6K/pxQgoiFC41wTNvoIncOxs";
-  # };
-
-  # networking.firewall = {
-  #   enable = true;
-  #   allowedTCPPorts = [ 80 443 ];
-  # };
+  programs.ssh.knownHosts = {
+    storagebox-ed25519.hostNames = [ "[${names.hetzner-offsite-backup-host}]:23" ];
+    storagebox-ed25519.publicKey =
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIICf9svRenC/PLKIL9nk6K/pxQgoiFC41wTNvoIncOxs";
+  };
 }
