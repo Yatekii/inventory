@@ -6,6 +6,7 @@
     ../../modules/clan/nix.nix
     ../../modules/clan/ssh-keys.nix
     ../../modules/clan/helix.nix
+    ../../modules/clan/home-manager.nix
   ];
 
   # aiur is the zerotier controller; saru is not.
