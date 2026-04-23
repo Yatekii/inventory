@@ -1,6 +1,6 @@
 { ... }:
 let
-  immich-domain = "immich.huesser.dev";
+  immich-domain = "photos.huesser.dev";
   immich-host = "127.0.0.1";
   immich-port = 2283;
 in
