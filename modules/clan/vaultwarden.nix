@@ -8,7 +8,7 @@ let
   vaultwarden-domain = "vaultwarden.huesser.dev";
   vaultwarden-signups-allowed = false;
   vaultwarden-admin-token =
-    config.clan.core.vars.generators.vaultwarden-admin-token.files.admin-token.path;
+    config.clan.core.vars.generators.vaultwarden.files.admin-token.path;
   vaultwarden-websocket-enabled = true;
   vaultwarden-host = "127.0.0.1";
   vaultwarden-port = 8222;
@@ -79,9 +79,11 @@ in
     };
   };
 
-  clan.core.vars.generators.vaultwarden-admin-token = {
-    # Random 64-char token. Retrieve once for admin-panel access:
-    #   clan vars get saru vaultwarden-admin-token/admin-token
+  clan.core.vars.generators.vaultwarden = {
+    # Random 64-char admin token. Retrieve once for admin-panel access:
+    #   clan vars get saru vaultwarden/admin-token
+    # Future vaultwarden-related vars (SMTP creds, etc.) go under the
+    # same generator.
     script = ''
       ${pkgs.pwgen}/bin/pwgen -s 64 1 > $out/admin-token
     '';
