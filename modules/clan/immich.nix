@@ -28,15 +28,6 @@ in
   # /saru/media/photos (group `users`, 0775).
   users.users.immich.extraGroups = [ "users" ];
 
-  # Ubuntu-era subdirectories under /saru/media/photos were created by
-  # the Docker container as root:root. Native Immich runs as user
-  # `immich`, so recursively claim ownership on every activation. `-`
-  # for mode means "leave existing mode alone" (files keep 0644, dirs
-  # 0755), while owner + group are forced to immich:immich.
-  systemd.tmpfiles.rules = [
-    "Z /saru/media/photos - immich immich -"
-  ];
-
   # Photos + videos can be large; allow a generous upload ceiling. Caddy's
   # default is effectively unlimited for reverse_proxy, but we set it
   # explicitly so future changes don't accidentally cap it.
