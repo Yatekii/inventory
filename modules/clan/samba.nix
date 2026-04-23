@@ -1,4 +1,4 @@
-{ ... }:
+{ config, pkgs, ... }:
 {
   # Samba file shares for the home LAN — mirrors the ansible-nas layout
   # (amos/media/scans/noah) so existing family device mounts reconnect
@@ -9,9 +9,48 @@
   # this is LAN-only in practice. If that assumption ever changes, move
   # to `networking.firewall.interfaces.<lan>.allowedTCPPorts`.
 
-  # Group used to gate write access on the `scans` share. Add the scanner
-  # device's smb user (created via `smbpasswd -a <user>`) to this group.
+  # Scanner group + SMB user used by the physical network scanner to
+  # write into `/saru/scans`. POSIX user exists so samba has a matching
+  # identity; the SMB password is materialised by a systemd oneshot out
+  # of a clan var, kept in sync on every activation.
   users.groups.scanner = { };
+  users.users.scanner = {
+    description = "SMB user for the household network scanner";
+    isSystemUser = true;
+    group = "scanner";
+  };
+
+  clan.core.vars.generators.scanner-smb = {
+    prompts.password = {
+      description = "SMB password for the scanner user (configure the same value on the scanner device)";
+      type = "hidden";
+      persist = true;
+    };
+    files.password = {
+      secret = true;
+      owner = "root";
+      mode = "0400";
+    };
+  };
+
+  # Pick the SMB password out of the clan var and push it into samba's
+  # passdb (tdbsam). Idempotent: delete + re-add on every activation so
+  # rotating the clan var Just Works on the next `clan machines update`.
+  systemd.services.samba-scanner-user = {
+    description = "Provision scanner SMB user from clan vars";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "samba-smbd.service" ];
+    requires = [ "samba-smbd.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      pass=$(cat ${config.clan.core.vars.generators.scanner-smb.files.password.path})
+      ${pkgs.samba}/bin/smbpasswd -x scanner 2>/dev/null || true
+      printf '%s\n%s\n' "$pass" "$pass" | ${pkgs.samba}/bin/smbpasswd -s -a scanner
+    '';
+  };
 
   services.samba = {
     enable = true;
