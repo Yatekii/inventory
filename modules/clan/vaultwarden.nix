@@ -7,8 +7,13 @@
 let
   vaultwarden-domain = "vaultwarden.huesser.dev";
   vaultwarden-signups-allowed = false;
-  vaultwarden-admin-token =
-    config.clan.core.vars.generators.vaultwarden.files.admin-token.path;
+  # Env-format file containing ADMIN_TOKEN=<random>. systemd loads it
+  # via EnvironmentFile= at service start, so the secret never enters
+  # the store. services.vaultwarden.config only accepts plain scalars,
+  # not clan's `_secret` shape — that's what makes environmentFile the
+  # right injection point.
+  vaultwarden-env-file =
+    config.clan.core.vars.generators.vaultwarden.files.env.path;
   vaultwarden-websocket-enabled = true;
   vaultwarden-host = "127.0.0.1";
   vaultwarden-port = 8222;
@@ -67,27 +72,30 @@ in
   services.vaultwarden = {
     enable = true;
     dbBackend = "sqlite";
+    environmentFile = vaultwarden-env-file;
     config = {
       DOMAIN = "https://${vaultwarden-domain}";
       SIGNUPS_ALLOWED = vaultwarden-signups-allowed;
-      ADMIN_TOKEN._secret = vaultwarden-admin-token;
       WEBSOCKET_ENABLED = vaultwarden-websocket-enabled;
       ROCKET_ADDRESS = vaultwarden-host;
       ROCKET_PORT = vaultwarden-port;
       WEBSOCKET_ADDRESS = vaultwarden-host;
       WEBSOCKET_PORT = vaultwarden-websocket-port;
+      # ADMIN_TOKEN arrives via environmentFile above (systemd EnvironmentFile).
     };
   };
 
   clan.core.vars.generators.vaultwarden = {
-    # Random 64-char admin token. Retrieve once for admin-panel access:
-    #   clan vars get saru vaultwarden/admin-token
-    # Future vaultwarden-related vars (SMTP creds, etc.) go under the
-    # same generator.
+    # Random 64-char admin token, wrapped in KEY=VAL for systemd
+    # EnvironmentFile=. Retrieve the raw token once for admin-panel access:
+    #   clan vars get saru vaultwarden/env
+    # (output shows the full `ADMIN_TOKEN=<token>` line — strip the prefix)
+    # Future vaultwarden-related vars (SMTP creds, etc.) go in the same
+    # file, one KEY=VAL line each.
     script = ''
-      ${pkgs.pwgen}/bin/pwgen -s 64 1 > $out/admin-token
+      echo "ADMIN_TOKEN=$(${pkgs.pwgen}/bin/pwgen -s 64 1)" > $out/env
     '';
-    files.admin-token = {
+    files.env = {
       secret = true;
       owner = vaultwarden-user;
       mode = "0400";
