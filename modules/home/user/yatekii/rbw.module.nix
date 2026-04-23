@@ -1,6 +1,6 @@
 { pkgs, ... }:
 let
-  url = "https://bitwarden.huesser.dev/";
+  url = "https://vaultwarden.huesser.dev/";
 in
 {
   programs.rbw = {
