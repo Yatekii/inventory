@@ -1,16 +1,59 @@
-{ ... }:
+{ config, pkgs, ... }:
 {
   # Samba file shares for the home LAN — mirrors the ansible-nas layout
   # (amos/media/scans/noah) so existing family device mounts reconnect
-  # unchanged. All four shares are guest-writable; the scanner device
-  # writes to `scans` as a guest (there was never a dedicated scanner
-  # user — the ansible `write_list: @scanner` was redundant with
-  # `writable: true`).
+  # unchanged. Amos/media/noah are guest-writable; scans is backed by a
+  # dedicated `scanner` SMB user because HP MFPs refuse pure-guest SMB
+  # write even when the share allows it (they require credentials in the
+  # "Log-in Authentication" flow).
   #
   # Ports (445/139 TCP, 137/138 UDP) are opened on all interfaces. Saru
   # sits behind a NAT'd router that doesn't forward SMB externally, so
   # this is LAN-only in practice. If that assumption ever changes, move
   # to `networking.firewall.interfaces.<lan>.allowedTCPPorts`.
+
+  # POSIX identity for the scanner's SMB user. No login shell — SMB auth
+  # only. Password comes from a clan var (generated randomly below),
+  # pushed into samba's tdbsam via a systemd oneshot on each activation.
+  users.groups.scanner = { };
+  users.users.scanner = {
+    description = "SMB user for the household network scanner";
+    isSystemUser = true;
+    group = "scanner";
+  };
+
+  clan.core.vars.generators.scanner-smb = {
+    # Random 32-char password; retrieve once with
+    #   clan vars get saru scanner-smb/password
+    # and paste into the printer's "Log-in Authentication" dialog.
+    # Rotate by deleting the var and re-running `clan vars generate saru`.
+    script = ''
+      ${pkgs.pwgen}/bin/pwgen -s 32 1 > $out/password
+    '';
+    files.password = {
+      secret = true;
+      owner = "root";
+      mode = "0400";
+    };
+  };
+
+  systemd.services.samba-scanner-user = {
+    description = "Provision scanner SMB user from clan vars";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "samba-smbd.service" ];
+    requires = [ "samba-smbd.service" ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+    };
+    script = ''
+      pass=$(cat ${config.clan.core.vars.generators.scanner-smb.files.password.path})
+      # Delete-then-add keeps the tdb password in sync with the clan var,
+      # so rotating the var is a one-command operation.
+      ${pkgs.samba}/bin/smbpasswd -x scanner 2>/dev/null || true
+      printf '%s\n%s\n' "$pass" "$pass" | ${pkgs.samba}/bin/smbpasswd -s -a scanner
+    '';
+  };
 
   services.samba = {
     enable = true;
