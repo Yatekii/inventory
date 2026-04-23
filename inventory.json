@@ -5,7 +5,7 @@
     },
     "saru": {
       "deploy": {
-        "targetHost": "root@saru:22"
+        "targetHost": "root@saru:13377"
       },
       "installedAt": 1776901314
     }
