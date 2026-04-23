@@ -10,6 +10,7 @@
     ../../modules/clan/samba.nix
     ../../modules/clan/caddy.nix
     ../../modules/clan/vaultwarden.nix
+    ../../modules/clan/jellyfin.nix
     # msmtp pending — waiting to decide mail path (stalwart-on-fenix vs
     # external provider). Module exists at ../../modules/clan/msmtp.nix.
     # ../../modules/clan/msmtp.nix
