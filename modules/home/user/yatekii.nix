@@ -9,9 +9,13 @@ let
   # inside `imports` causes infinite recursion through _module.args.
   all = gatherModules lib [ ./yatekii ];
   portable = lib.filter (p: !lib.hasInfix "/desktop/" (toString p)) all;
+  # Shared HM modules applied to any HM-managed user (root + yatekii).
+  # Lives outside ./yatekii/ so root can import the same set without
+  # dragging in yatekii-specific personal config.
+  shared = gatherModules lib [ ../shared ];
 in
 {
-  imports = portable;
+  imports = portable ++ shared;
   # This is a flake-parts module that defines home-manager modules
   # These can be imported in machine-specific home-manager configs
 

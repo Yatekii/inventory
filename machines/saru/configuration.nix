@@ -6,7 +6,6 @@
     ../../modules/clan/nix.nix
     ../../modules/clan/ssh-keys.nix
     ../../modules/clan/helix.nix
-    ../../modules/clan/shell.nix
     ../../modules/clan/home-manager.nix
   ];
 
