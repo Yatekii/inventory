@@ -87,6 +87,11 @@
         "vfs objects" = "catia fruit streams_xattr";
         "fruit:metadata" = "stream";
         "fruit:encoding" = "native";
+        # Temporary: verbose auth + file-op logs until scanner works.
+        # Revert to default (level 0) once things are stable.
+        "log level" = "3 auth:5";
+        "log file" = "/var/log/samba/log.%m";
+        "max log size" = "50";
       };
 
       amos = {
