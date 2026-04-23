@@ -53,6 +53,7 @@ in
     ../../modules/clan/mealie.nix
     ../../modules/clan/ssh-keys.nix
     ../../modules/clan/helix.nix
+    ../../modules/clan/home-manager.nix
   ];
 
   # Set this for clan commands use ssh i.e. `clan machines update`
