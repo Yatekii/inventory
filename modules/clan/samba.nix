@@ -20,10 +20,19 @@
         "workgroup" = "WORKGROUP";
         "server string" = "Saru";
         "netbios name" = "saru";
-        "server min protocol" = "SMB2";
-        "client min protocol" = "SMB3";
+        # SMB1 + NTLMv1 are re-enabled because older scanners/printers on
+        # the home LAN only speak those protocols. Modern samba (4.18+)
+        # disables them by default; Ubuntu 20.04's 4.11 did not, so
+        # everything "just worked" before the migration. Home LAN + no
+        # domain auth means the usual security concerns are moot.
+        "server min protocol" = "NT1";
+        "client min protocol" = "NT1";
+        "ntlm auth" = "yes";
         "security" = "user";
-        "map to guest" = "Bad Password";
+        # "Bad User" (not "Bad Password") also maps unknown usernames to
+        # guest — older scanner firmware often sends a random/empty user
+        # that no POSIX account matches.
+        "map to guest" = "Bad User";
         "guest account" = "nobody";
         # Apple Finder extensions — preserves macOS metadata, stream-based
         # resource forks (no hidden `._` companion files in the shares).
