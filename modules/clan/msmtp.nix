@@ -1,7 +1,6 @@
 { config, ... }:
 let
-  fastmailPasswordPath =
-    config.clan.core.vars.generators.fastmail-smtp.files.password.path;
+  fastmailPasswordPath = config.clan.core.vars.generators.fastmail-smtp.files.password.path;
 in
 {
   # msmtp as a send-only relay via Fastmail. Provides the `sendmail` ABI
