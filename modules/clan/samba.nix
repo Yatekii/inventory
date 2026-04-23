@@ -72,23 +72,10 @@
         "workgroup" = "WORKGROUP";
         "server string" = "Saru";
         "netbios name" = "saru";
-        # SMB1 + NTLMv1 are re-enabled because older scanners/printers on
-        # the home LAN only speak those protocols. Modern samba (4.18+)
-        # disables them by default; Ubuntu 20.04's 4.11 did not, so
-        # everything "just worked" before the migration. Home LAN + no
-        # domain auth means the usual security concerns are moot.
-        "server min protocol" = "NT1";
-        "client min protocol" = "NT1";
-        "ntlm auth" = "yes";
-        "lanman auth" = "yes";
-        # Old printers hang up mid-handshake if samba insists on signing
-        # or encryption — both are SMB2+ features they don't implement.
-        "server signing" = "auto";
-        "smb encrypt" = "off";
         "security" = "user";
-        # "Bad User" (not "Bad Password") also maps unknown usernames to
-        # guest — older scanner firmware often sends a random/empty user
-        # that no POSIX account matches.
+        # "Bad User" maps unknown usernames to guest — matches how the
+        # ansible-nas setup ran and keeps `smbclient //saru/media -N`
+        # working without fiddling.
         "map to guest" = "Bad User";
         "guest account" = "nobody";
         # Apple Finder extensions — preserves macOS metadata, stream-based
@@ -96,11 +83,6 @@
         "vfs objects" = "catia fruit streams_xattr";
         "fruit:metadata" = "stream";
         "fruit:encoding" = "native";
-        # Temporary: verbose auth + file-op logs until scanner works.
-        # Revert to default (level 0) once things are stable.
-        "log level" = "3 auth:5";
-        "log file" = "/var/log/samba/log.%m";
-        "max log size" = "50";
       };
 
       amos = {
