@@ -15,23 +15,31 @@
   # POSIX identity for the scanner's SMB user. No login shell — SMB auth
   # only. Password comes from a clan var (generated randomly below),
   # pushed into samba's tdbsam via a systemd oneshot on each activation.
+  # Amos was the primary day-to-day user on the Ubuntu install (UID 1002,
+  # group 1003). His legacy files across /saru/amos, /saru/scans, etc.
+  # carry those numeric IDs on the ZFS pool. Declaring amos at the same
+  # IDs on NixOS preserves file ownership semantically (ls shows `amos`
+  # instead of a bare 1002) and lets us put other users in the `amos`
+  # group when they need write access to his shared areas.
+  users.groups.amos = {
+    gid = 1003;
+  };
+  users.users.amos = {
+    uid = 1002;
+    group = "amos";
+    isSystemUser = true;
+    description = "Amos (legacy identity from Ubuntu install, no login)";
+  };
+
   users.groups.scanner = { };
   users.users.scanner = {
     description = "SMB user for the household network scanner";
     isSystemUser = true;
     group = "scanner";
+    # Secondary membership in `amos` so scanner can write to /saru/scans
+    # (group=amos, 0775). No need to chown the share.
+    extraGroups = [ "amos" ];
   };
-
-  # /saru/scans used to be group-owned by the Ubuntu-era GID 1003 (Amos's
-  # old group, which has no matching name on NixOS). NixOS refuses to
-  # retroactively change an existing group's GID, so instead we reassign
-  # the directory's group to `scanner` on every activation. Existing
-  # files inside keep their historical 1002:1003 ownership (world-
-  # readable, fine for guest browsing); new scans get written as
-  # scanner:scanner.
-  systemd.tmpfiles.rules = [
-    "z /saru/scans 0775 root scanner -"
-  ];
 
   clan.core.vars.generators.scanner-smb = {
     # Random 32-char password; retrieve once with
