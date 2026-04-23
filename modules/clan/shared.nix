@@ -14,4 +14,10 @@
     uid = 1000;
     openssh.authorizedKeys.keys = config.users.users.root.openssh.authorizedKeys.keys;
   };
+
+  # Passwordless sudo for wheel (yatekii). Acceptable trade-off: the only
+  # entry points are (a) SSH key auth as yatekii/root and (b) physical
+  # console. No password adds no meaningful barrier against an attacker
+  # who already has shell as a wheel user.
+  security.sudo.wheelNeedsPassword = false;
 }
