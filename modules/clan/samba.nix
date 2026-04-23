@@ -15,18 +15,23 @@
   # POSIX identity for the scanner's SMB user. No login shell — SMB auth
   # only. Password comes from a clan var (generated randomly below),
   # pushed into samba's tdbsam via a systemd oneshot on each activation.
-  # GID 1003 matches the group owning `/saru/scans` on the ZFS pool (left
-  # over from the Ubuntu install where it was Amos's group). Pinning the
-  # new scanner group to the same GID means files are group-writable by
-  # the scanner user without recursively chowning the whole share.
-  users.groups.scanner = {
-    gid = 1003;
-  };
+  users.groups.scanner = { };
   users.users.scanner = {
     description = "SMB user for the household network scanner";
     isSystemUser = true;
     group = "scanner";
   };
+
+  # /saru/scans used to be group-owned by the Ubuntu-era GID 1003 (Amos's
+  # old group, which has no matching name on NixOS). NixOS refuses to
+  # retroactively change an existing group's GID, so instead we reassign
+  # the directory's group to `scanner` on every activation. Existing
+  # files inside keep their historical 1002:1003 ownership (world-
+  # readable, fine for guest browsing); new scans get written as
+  # scanner:scanner.
+  systemd.tmpfiles.rules = [
+    "z /saru/scans 0775 root scanner -"
+  ];
 
   clan.core.vars.generators.scanner-smb = {
     # Random 32-char password; retrieve once with
