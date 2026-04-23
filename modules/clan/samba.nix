@@ -15,7 +15,13 @@
   # POSIX identity for the scanner's SMB user. No login shell — SMB auth
   # only. Password comes from a clan var (generated randomly below),
   # pushed into samba's tdbsam via a systemd oneshot on each activation.
-  users.groups.scanner = { };
+  # GID 1003 matches the group owning `/saru/scans` on the ZFS pool (left
+  # over from the Ubuntu install where it was Amos's group). Pinning the
+  # new scanner group to the same GID means files are group-writable by
+  # the scanner user without recursively chowning the whole share.
+  users.groups.scanner = {
+    gid = 1003;
+  };
   users.users.scanner = {
     description = "SMB user for the household network scanner";
     isSystemUser = true;
