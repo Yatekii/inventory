@@ -28,6 +28,11 @@
         "server min protocol" = "NT1";
         "client min protocol" = "NT1";
         "ntlm auth" = "yes";
+        "lanman auth" = "yes";
+        # Old printers hang up mid-handshake if samba insists on signing
+        # or encryption — both are SMB2+ features they don't implement.
+        "server signing" = "auto";
+        "smb encrypt" = "off";
         "security" = "user";
         # "Bad User" (not "Bad Password") also maps unknown usernames to
         # guest — older scanner firmware often sends a random/empty user
