@@ -12,8 +12,7 @@ let
   # the store. services.vaultwarden.config only accepts plain scalars,
   # not clan's `_secret` shape — that's what makes environmentFile the
   # right injection point.
-  vaultwarden-env-file =
-    config.clan.core.vars.generators.vaultwarden.files.env.path;
+  vaultwarden-env-file = config.clan.core.vars.generators.vaultwarden.files.env.path;
   vaultwarden-websocket-enabled = true;
   vaultwarden-host = "127.0.0.1";
   vaultwarden-port = 8222;
@@ -124,7 +123,6 @@ in
 
   programs.ssh.knownHosts = {
     storagebox-ed25519.hostNames = [ "[${names.hetzner-offsite-backup-host}]:23" ];
-    storagebox-ed25519.publicKey =
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIICf9svRenC/PLKIL9nk6K/pxQgoiFC41wTNvoIncOxs";
+    storagebox-ed25519.publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIICf9svRenC/PLKIL9nk6K/pxQgoiFC41wTNvoIncOxs";
   };
 }
